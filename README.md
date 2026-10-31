@@ -83,6 +83,4 @@ cd <repo-name>
 | Internal Staff | Customers, subscriptions and invoices (limited access) |
 | Customer | Own subscriptions and invoices via portal |
 
-## License
 
-_Add your license here._
