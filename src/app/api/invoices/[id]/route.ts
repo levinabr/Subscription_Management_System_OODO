@@ -1,27 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth/session';
-import { getInvoiceDetails } from '@/services/payment/payment.service';
+import { NextRequest } from 'next/server';
+import { errorResponse, successResponse } from '@/lib/api-response';
+import { getAuthUser } from '@/lib/auth/auth-helper';
+import { InvoiceService } from '@/services/invoice/invoice-service';
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
-    const user = await getSessionUser(req);
-    const customerScope = user?.role === 'CUSTOMER' ? user.customerId || 'non-existent' : undefined;
+    const user = getAuthUser(request);
+    const enforcedCustomerId = user.role === 'CUSTOMER' ? user.customerId || user.id : undefined;
 
-    const invoice = await getInvoiceDetails(id, customerScope);
+    const invoice = await InvoiceService.getInvoiceById(params.id, enforcedCustomerId);
     if (!invoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+      return errorResponse('Invoice not found', 404);
     }
 
-    return NextResponse.json(invoice);
-  } catch (error: any) {
-    const status = error.statusCode || 500;
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status }
-    );
+    return successResponse(invoice);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to fetch invoice';
+    const status = msg.includes('Forbidden') ? 403 : 500;
+    return errorResponse(msg, status);
   }
 }

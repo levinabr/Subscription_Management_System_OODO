@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Brightloop — Subscription Control Center",
-  description:
-    "Enterprise recurring billing, multi-tier product catalog, tax rule management, payment recording, and customer subscriptions.",
+  title: 'Brightloop — Subscription Control Center',
+  description: 'Recurring Billing, Discounts, Tax Engine & Invoicing',
 };
 
 export default function RootLayout({
@@ -13,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white font-sans">
+    <html lang="en">
+      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">
         {children}
       </body>
     </html>

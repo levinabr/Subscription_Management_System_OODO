@@ -1,266 +1,270 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { InvoiceStatusBadge, formatINR } from '@/components/features/invoices/InvoiceStatusBadge';
-import {
-  FileText,
-  Search,
-  Filter,
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Calendar,
-  CreditCard,
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { InvoiceStatusBadge } from '@/components/features/invoices/invoice-status-badge';
+import { Search, Filter, AlertCircle, FileText, CheckCircle, XCircle } from 'lucide-react';
+
+interface InvoiceListItem {
+  id: string;
+  invoiceNo: string;
+  periodStart: string;
+  periodEnd: string;
+  issuedAt: string;
+  dueAt: string;
+  status: string;
+  subtotalPaise: number;
+  discountPaise: number;
+  taxPaise: number;
+  totalPaise: number;
+  customer: {
+    name: string;
+    email: string;
+  };
+  subscription: {
+    subscriptionNo: string;
+  };
+}
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 15,
-    totalCount: 0,
-    totalPages: 1,
-  });
+  const [invoices, setInvoices] = useState<InvoiceListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [isOverdueOnly, setIsOverdueOnly] = useState<boolean>(false);
-  const [search, setSearch] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-
-  const fetchInvoices = async (page = 1) => {
+  const fetchInvoices = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: pagination.limit.toString(),
-      });
-
-      if (statusFilter !== 'ALL') params.append('status', statusFilter);
-      if (isOverdueOnly) params.append('isOverdue', 'true');
-      if (search.trim()) params.append('search', search.trim());
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (statusFilter) params.set('status', statusFilter);
+      if (overdueOnly) params.set('overdue', 'true');
 
       const res = await fetch(`/api/invoices?${params.toString()}`);
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
-        setInvoices(data.items);
-        setPagination(data.pagination);
+        setInvoices(data.data || []);
+      } else {
+        setError(data.error?.message || 'Failed to fetch invoices');
       }
-    } catch (err) {
-      console.error('Failed to load invoices:', err);
+    } catch {
+      setError('Network error loading invoices');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInvoices(1);
-  }, [statusFilter, isOverdueOnly]);
+    fetchInvoices();
+  }, [statusFilter, overdueOnly]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchInvoices(1);
+    fetchInvoices();
+  };
+
+  const handleConfirm = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch(`/api/invoices/${id}/confirm`, { method: 'POST' });
+      if (res.ok) {
+        await fetchInvoices();
+      } else {
+        const data = await res.json();
+        alert(data.error?.message || 'Failed to confirm');
+      }
+    } catch {
+      alert('Error confirming invoice');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCancel = async (id: string) => {
+    if (!confirm('Are you sure you want to cancel this invoice?')) return;
+    setActionLoading(id);
+    try {
+      const res = await fetch(`/api/invoices/${id}/cancel`, { method: 'POST' });
+      if (res.ok) {
+        await fetchInvoices();
+      } else {
+        const data = await res.json();
+        alert(data.error?.message || 'Failed to cancel');
+      }
+    } catch {
+      alert('Error cancelling invoice');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const formatCurrency = (paise: number) => {
+    return '₹' + (paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-IN', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Invoices
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Invoices</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Monitor invoices, inspect line items, track outstanding balances, and collect payments.
+            Manage customer subscription invoices, review tax breakdowns and dispatch bills.
           </p>
         </div>
+        <Link
+          href="/billing"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors shadow-sm"
+        >
+          <FileText className="w-4 h-4" />
+          Run Recurring Billing
+        </Link>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-        {/* Search */}
-        <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
+        <form onSubmit={handleSearchSubmit} className="w-full md:w-96 relative">
           <input
             type="text"
+            placeholder="Search invoice # or customer..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search invoice # or customer..."
-            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-600 focus:outline-none"
+            className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
         </form>
 
-        {/* Filter controls */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Status selector */}
-          <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="text-slate-500">Status:</span>
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Filter className="w-4 h-4 text-slate-400" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs font-medium focus:ring-2 focus:ring-emerald-200"
+              className="text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="ALL">All Statuses</option>
+              <option value="">All Statuses</option>
+              <option value="DRAFT">Draft</option>
               <option value="CONFIRMED">Confirmed</option>
               <option value="PAID">Paid</option>
-              <option value="DRAFT">Draft</option>
               <option value="CANCELLED">Cancelled</option>
             </select>
           </div>
 
-          {/* Overdue toggle */}
-          <button
-            type="button"
-            onClick={() => setIsOverdueOnly(!isOverdueOnly)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border ${
-              isOverdueOnly
-                ? 'bg-rose-100 text-rose-800 border-rose-300'
-                : 'bg-slate-50 text-slate-600 border-slate-300 hover:bg-slate-100'
-            }`}
-          >
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-            Only Overdue
-          </button>
+          <label className="flex items-center gap-2 text-sm text-slate-700 font-medium cursor-pointer">
+            <input
+              type="checkbox"
+              checked={overdueOnly}
+              onChange={(e) => setOverdueOnly(e.target.checked)}
+              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+            />
+            Overdue Only
+          </label>
         </div>
       </div>
 
-      {/* Invoices Table */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      {error && (
+        <div className="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {/* Invoice Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="py-16 text-center text-sm text-slate-500">
-            Loading invoices...
-          </div>
+          <div className="p-12 text-center text-slate-400 text-sm">Loading invoices...</div>
         ) : invoices.length === 0 ? (
-          <div className="py-16 text-center">
-            <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h4 className="text-base font-semibold text-slate-700">No invoices found</h4>
-            <p className="text-xs text-slate-500 mt-1">
-              Try adjusting your search criteria or status filter.
-            </p>
+          <div className="p-12 text-center text-slate-500 text-sm">
+            No invoices found matching your filters.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
-                  <th className="py-3.5 px-4">Invoice #</th>
-                  <th className="py-3.5 px-4">Customer</th>
-                  <th className="py-3.5 px-4">Issued</th>
-                  <th className="py-3.5 px-4">Due Date</th>
-                  <th className="py-3.5 px-4 text-right">Total</th>
-                  <th className="py-3.5 px-4 text-right">Paid</th>
-                  <th className="py-3.5 px-4 text-right">Outstanding</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-4 text-right">Action</th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="py-3 px-4">Invoice #</th>
+                  <th className="py-3 px-4">Customer</th>
+                  <th className="py-3 px-4">Subscription</th>
+                  <th className="py-3 px-4">Period</th>
+                  <th className="py-3 px-4 text-right">Subtotal</th>
+                  <th className="py-3 px-4 text-right">Discount</th>
+                  <th className="py-3 px-4 text-right">Tax</th>
+                  <th className="py-3 px-4 text-right">Total</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-4">Due Date</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50/60 transition">
-                    <td className="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
-                      <Link
-                        href={`/invoices/${inv.id}`}
-                        className="text-emerald-600 hover:underline flex items-center gap-1.5"
-                      >
-                        #{inv.invoiceNo}
+                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-4 font-mono font-medium text-indigo-600">
+                      <Link href={`/invoices/${inv.id}`} className="hover:underline">
+                        {inv.invoiceNo}
                       </Link>
                     </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-800">
-                        {inv.customer?.businessName || 'Customer'}
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        {inv.customer?.billingEmail}
-                      </div>
+                    <td className="py-3 px-4">
+                      <div className="font-medium text-slate-900">{inv.customer.name}</div>
+                      <div className="text-xs text-slate-500">{inv.customer.email}</div>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600 text-xs whitespace-nowrap">
-                      {new Date(inv.issuedAt).toLocaleDateString()}
+                    <td className="py-3 px-4 text-slate-600">{inv.subscription.subscriptionNo}</td>
+                    <td className="py-3 px-4 text-slate-600 text-xs">
+                      {formatDate(inv.periodStart)} - {formatDate(inv.periodEnd)}
                     </td>
-                    <td className="py-3.5 px-4 text-xs whitespace-nowrap">
-                      <span
-                        className={
-                          inv.isOverdue
-                            ? 'text-rose-700 font-bold'
-                            : 'text-slate-600'
-                        }
-                      >
-                        {new Date(inv.dueAt).toLocaleDateString()}
-                      </span>
+                    <td className="py-3 px-4 text-right text-slate-600">{formatCurrency(inv.subtotalPaise)}</td>
+                    <td className="py-3 px-4 text-right text-emerald-600 font-medium">
+                      {inv.discountPaise > 0 ? `-${formatCurrency(inv.discountPaise)}` : '—'}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-semibold text-slate-900 whitespace-nowrap">
-                      {formatINR(inv.totalPaise)}
+                    <td className="py-3 px-4 text-right text-slate-600">{formatCurrency(inv.taxPaise)}</td>
+                    <td className="py-3 px-4 text-right font-bold text-slate-900">
+                      {formatCurrency(inv.totalPaise)}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-medium text-emerald-700 whitespace-nowrap">
-                      {formatINR(inv.totalPaidPaise)}
+                    <td className="py-3 px-4 text-center">
+                      <InvoiceStatusBadge status={inv.status} />
                     </td>
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <span
-                        className={`font-bold ${
-                          inv.outstandingPaise > 0
-                            ? 'text-rose-700'
-                            : 'text-emerald-700'
-                        }`}
-                      >
-                        {formatINR(inv.outstandingPaise)}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                      <InvoiceStatusBadge
-                        status={inv.status}
-                        isOverdue={inv.isOverdue}
-                      />
-                    </td>
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                    <td className="py-3 px-4 text-slate-600 text-xs">{formatDate(inv.dueAt)}</td>
+                    <td className="py-3 px-4 text-right space-x-2">
                       <Link
                         href={`/invoices/${inv.id}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition"
+                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
                       >
-                        {inv.status === 'CONFIRMED' && inv.outstandingPaise > 0 ? (
-                          <>
-                            <CreditCard className="w-3.5 h-3.5" /> Record Pay
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="w-3.5 h-3.5" /> Details
-                          </>
-                        )}
+                        View
                       </Link>
+                      {inv.status === 'DRAFT' && (
+                        <button
+                          onClick={() => handleConfirm(inv.id)}
+                          disabled={actionLoading === inv.id}
+                          className="text-xs font-medium text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+                        >
+                          Confirm
+                        </button>
+                      )}
+                      {inv.status !== 'PAID' && inv.status !== 'CANCELLED' && (
+                        <button
+                          onClick={() => handleCancel(inv.id)}
+                          disabled={actionLoading === inv.id}
+                          className="text-xs font-medium text-rose-600 hover:text-rose-800 disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* Pagination Footer */}
-        {pagination.totalPages > 1 && (
-          <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-            <div>
-              Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-              {Math.min(pagination.page * pagination.limit, pagination.totalCount)} of{' '}
-              {pagination.totalCount} invoices
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => fetchInvoices(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-                className="px-2.5 py-1.5 border border-slate-300 rounded bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-medium"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" /> Previous
-              </button>
-              <span className="font-semibold px-2 text-slate-800">
-                Page {pagination.page} of {pagination.totalPages}
-              </span>
-              <button
-                onClick={() => fetchInvoices(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages}
-                className="px-2.5 py-1.5 border border-slate-300 rounded bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-medium"
-              >
-                Next <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
           </div>
         )}
       </div>

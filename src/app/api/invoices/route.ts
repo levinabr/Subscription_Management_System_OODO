@@ -1,45 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth/session';
-import { InvoiceFilterSchema } from '@/validations/payment/payment.schema';
-import { getInvoicesList } from '@/services/payment/payment.service';
+import { NextRequest } from 'next/server';
+import { errorResponse, successResponse } from '@/lib/api-response';
+import { getAuthUser } from '@/lib/auth/auth-helper';
+import { InvoiceService } from '@/services/invoice/invoice-service';
+import { invoiceListQuerySchema } from '@/validations/invoice/invoice-schema';
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const user = await getSessionUser(req);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = getAuthUser(request);
+    const { searchParams } = new URL(request.url);
 
-    const { searchParams } = new URL(req.url);
     const rawQuery = {
       page: searchParams.get('page') || undefined,
       limit: searchParams.get('limit') || undefined,
+      search: searchParams.get('search') || undefined,
       status: searchParams.get('status') || undefined,
-      customerId: searchParams.get('customerId') || undefined,
-      isOverdue: searchParams.get('isOverdue') || undefined,
       startDate: searchParams.get('startDate') || undefined,
       endDate: searchParams.get('endDate') || undefined,
-      search: searchParams.get('search') || undefined,
+      overdue: searchParams.get('overdue') || undefined,
+      customerId: searchParams.get('customerId') || undefined,
     };
 
-    const parseResult = InvoiceFilterSchema.safeParse(rawQuery);
-    if (!parseResult.success) {
-      return NextResponse.json(
-        { error: 'Invalid filter parameters', details: parseResult.error.flatten() },
-        { status: 400 }
-      );
+    const parsed = invoiceListQuerySchema.safeParse(rawQuery);
+    if (!parsed.success) {
+      return errorResponse('Validation error', 422, parsed.error.flatten().fieldErrors);
     }
 
-    // Customers can ONLY view their own invoices
-    const customerScope = user.role === 'CUSTOMER' ? user.customerId || 'non-existent' : undefined;
+    // Customer scoping: If user is CUSTOMER, only permit their own customerId
+    const enforcedCustomerId = user.role === 'CUSTOMER' ? user.customerId || user.id : undefined;
 
-    const data = await getInvoicesList(parseResult.data, customerScope);
-    return NextResponse.json(data);
-  } catch (error: any) {
-    const status = error.statusCode || 500;
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status }
-    );
+    const result = await InvoiceService.listInvoices({
+      ...parsed.data,
+      enforcedCustomerId,
+    });
+
+    return successResponse(result.invoices, 200, result.pagination);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to list invoices';
+    return errorResponse(msg, 500);
   }
 }
