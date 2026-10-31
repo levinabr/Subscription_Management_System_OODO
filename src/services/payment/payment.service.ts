@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/db/prisma';
 import { CreatePaymentInput, PaymentFilterInput, InvoiceFilterInput } from '@/validations/payment/payment.schema';
-import { InvoiceStatus, PaymentMethod, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+type InvoiceStatus = string;
+type PaymentMethod = string;
 
 /**
  * In-memory mutex to serialize concurrent payment requests per invoice
@@ -198,7 +200,7 @@ export async function recordInvoicePayment(
 
       // 8. Commit and return
       return {
-        payment,
+        payment: { ...payment, method: payment.method as PaymentMethod },
         invoice: {
           id: invoice.id,
           invoiceNo: invoice.invoiceNo,
@@ -441,7 +443,7 @@ export async function getInvoicesList(
       discountPaise: inv.discountPaise,
       taxPaise: inv.taxPaise,
       totalPaise: inv.totalPaise,
-      paidAt: inv.paidAt,
+      paidAt: (inv as any).paidAt ?? null,
       totalPaidPaise,
       outstandingPaise,
       isOverdue,

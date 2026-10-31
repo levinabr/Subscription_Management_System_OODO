@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { UserRole } from "./session";
 import { getCurrentUser, AuthenticatedUser } from "./session";
 import { ApiError } from "@/lib/errors/api-error";
 
@@ -18,7 +18,7 @@ export async function requireAuthenticatedUser(): Promise<AuthenticatedUser> {
  */
 export async function requireRole(allowedRoles: UserRole[]): Promise<AuthenticatedUser> {
   const user = await requireAuthenticatedUser();
-  if (!allowedRoles.includes(user.role)) {
+  if (!allowedRoles.includes(user.role as UserRole)) {
     throw ApiError.forbidden(
       `Access forbidden: requires one of the following roles: [${allowedRoles.join(", ")}]`
     );

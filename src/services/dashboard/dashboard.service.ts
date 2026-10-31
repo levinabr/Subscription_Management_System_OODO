@@ -245,7 +245,7 @@ export async function getDashboardSummary(
     if (g.status === 'CONFIRMED') totalConfirmedInvoices = g._count.id;
     if (g.status === 'PAID') totalPaidInvoices = g._count.id;
     return {
-      status: g.status,
+      status: g.status as any,
       count: g._count.id,
       totalPaise: g._sum.totalPaise || 0,
     };

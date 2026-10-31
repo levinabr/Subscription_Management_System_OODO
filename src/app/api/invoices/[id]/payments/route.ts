@@ -56,7 +56,7 @@ export async function GET(
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ payments: invoice.payments });
+    return NextResponse.json({ payments: (invoice as any).payments || [] });
   } catch (error: any) {
     const status = error.statusCode || 500;
     return NextResponse.json(

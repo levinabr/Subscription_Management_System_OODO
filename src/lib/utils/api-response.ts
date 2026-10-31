@@ -41,6 +41,9 @@ export function apiError(
 }
 
 export function handleApiError(error: unknown): NextResponse<ApiErrorResponse> {
+  if (typeof error === 'object' && error !== null && 'digest' in error && (error as { digest?: string }).digest === 'DYNAMIC_SERVER_USAGE') {
+    throw error;
+  }
   if (error instanceof ApiError) {
     return apiError(error.code, error.message, error.statusCode, error.details);
   }

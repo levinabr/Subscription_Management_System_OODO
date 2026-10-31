@@ -32,9 +32,9 @@ export class CustomerService {
     const where: Prisma.CustomerWhereInput = {};
     if (search) {
       where.OR = [
-        { companyName: { contains: search, mode: "insensitive" } },
-        { contactName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
+        { companyName: { contains: search } },
+        { contactName: { contains: search } },
+        { email: { contains: search } },
       ];
     }
 

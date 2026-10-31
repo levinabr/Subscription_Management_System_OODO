@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function CustomerDashboardPage() {
   const user = await getCurrentUser();
 
-  const customer = user?.customerId
+  const customer: any = user?.customerId
     ? await prisma.customer.findUnique({
         where: { id: user.customerId },
         include: {
@@ -37,7 +37,7 @@ export default async function CustomerDashboardPage() {
             <span>Customer Portal · Verified Account</span>
           </div>
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-            {customer?.companyName || "Organization Dashboard"}
+            {customer?.companyName || customer?.company || customer?.name || "Organization Dashboard"}
           </h2>
           <p className="text-sm text-slate-300">
             Manage your active subscriptions, review billing runs, and access tax invoices.
@@ -57,14 +57,14 @@ export default async function CustomerDashboardPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-slate-900">
-                {customer?.companyName}
+                {customer?.companyName || customer?.company || customer?.name}
               </span>
               <Badge variant="success" size="sm">
                 Active
               </Badge>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Primary: {customer?.contactName} ({customer?.email})
+              Primary: {customer?.contactName || customer?.name} ({customer?.email})
             </p>
           </CardContent>
         </Card>
@@ -95,7 +95,7 @@ export default async function CustomerDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-mono font-semibold text-slate-900">
-              {customer?.taxIdentifier || "Not registered"}
+              {customer?.taxIdentifier || customer?.taxId || "Not registered"}
             </div>
             <p className="text-xs text-slate-500 mt-1">
               Applied automatically to invoice lines
@@ -120,17 +120,17 @@ export default async function CustomerDashboardPage() {
               </p>
             ) : (
               <div className="space-y-3">
-                {customer?.subscriptions.map((s) => (
+                {customer?.subscriptions.map((s: any) => (
                   <div
                     key={s.id}
                     className="p-3 border rounded-lg border-slate-100 flex items-center justify-between"
                   >
                     <div>
                       <div className="font-semibold text-sm text-slate-900">
-                        {s.planSnapshotName}
+                        {s.planSnapshotName || s.planNameSnapshot || "Subscription"}
                       </div>
                       <div className="text-xs text-slate-400 font-mono">
-                        {s.subscriptionNo} · {s.planSnapshotBillingInterval}
+                        {s.subscriptionNo} · {s.planSnapshotBillingInterval || s.billingInterval}
                       </div>
                     </div>
                     <Badge variant="primary" size="sm">
@@ -157,7 +157,7 @@ export default async function CustomerDashboardPage() {
               </p>
             ) : (
               <div className="space-y-3">
-                {customer?.invoices.map((inv) => (
+                {customer?.invoices.map((inv: any) => (
                   <div
                     key={inv.id}
                     className="p-3 border rounded-lg border-slate-100 flex items-center justify-between"
@@ -167,7 +167,7 @@ export default async function CustomerDashboardPage() {
                         {inv.invoiceNo}
                       </div>
                       <div className="text-xs text-slate-400">
-                        Due: {formatDate(inv.dueDate)}
+                        Due: {formatDate(inv.dueDate || inv.dueAt)}
                       </div>
                     </div>
                     <Badge variant="neutral" size="sm">

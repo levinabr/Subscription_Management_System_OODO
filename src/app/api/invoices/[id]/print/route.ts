@@ -11,7 +11,7 @@ export async function GET(
     const user = await getSessionUser(req);
     const customerScope = user?.role === 'CUSTOMER' ? user.customerId || 'non-existent' : undefined;
 
-    const invoice = await getInvoiceDetails(id, customerScope);
+    const invoice: any = await getInvoiceDetails(id, customerScope);
     if (!invoice) {
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }

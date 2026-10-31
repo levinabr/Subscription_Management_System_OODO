@@ -1,5 +1,6 @@
 // Prisma schema for Brightloop Subscription Management System
-// Owned by Amal (Prompt 2). Maintained with strict alignment.
+// Unified schema aligning Amal (Foundation/Auth/Catalog), Joe (Payments/Dashboard),
+// Joshil (Billing/Invoices), and Levin (Quotations/Subscriptions).
 
 generator client {
   provider = "prisma-client-js"
@@ -10,69 +11,269 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ----------------------------------------------------
+// AUTH & CUSTOMERS
+// ----------------------------------------------------
+
 model Customer {
   id            String         @id @default(cuid())
-  name          String
-  email         String         @unique
+  name          String         @default("Customer")
+  companyName   String?
+  businessName  String?
+  contactName   String?
   company       String?
+  email         String         @unique
+  billingEmail  String?
   address       String?
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
   phone         String?
+  taxIdentifier String?
+  taxId         String?
+  active        Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  users         User[]
   subscriptions Subscription[]
   invoices      Invoice[]
 }
 
-model Plan {
-  id              String         @id @default(cuid())
-  name            String
-  code            String         @unique
-  pricePaise      Int
-  billingInterval String         // DAILY, WEEKLY, MONTHLY, YEARLY
-  taxRateBps      Int            @default(0)
-  taxName         String?
-  minQuantity     Int            @default(1)
-  autoCloseAtEnd  Boolean        @default(false)
-  canCloseEarly   Boolean        @default(true)
-  canPause        Boolean        @default(true)
-  canRenew        Boolean        @default(true)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+model User {
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  passwordHash        String?
+  password            String?
+  role                String               @default("CUSTOMER")
+  customerId          String?
+  customer            Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  payments            Payment[]            @relation("RecordedPayments")
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
 
-  subscriptions   Subscription[]
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// ----------------------------------------------------
+// CATALOG: TAX, PRODUCT, VARIANT & PLAN
+// ----------------------------------------------------
+
+model TaxRule {
+  id        String    @id @default(cuid())
+  name      String
+  rateBps   Int       @default(0) // basis points
+  rate      Int       @default(0) // basis points
+  isDefault Boolean   @default(false)
+  active    Boolean   @default(true)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  products  Product[]
+  plans     Plan[]
 }
 
 model Product {
-  id              String                @id @default(cuid())
-  name            String
-  sku             String                @unique
-  salesPricePaise Int
-  costPricePaise  Int                   @default(0)
-  taxRateBps      Int                   @default(0)
-  taxName         String?
-  notes           String?
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id                   String                @id @default(cuid())
+  sku                  String                @unique
+  name                 String
+  type                 String                @default("SOFTWARE")
+  productType          String                @default("SOFTWARE")
+  salesPricePaise      Int                   @default(0)
+  salesPrice           Int                   @default(0)
+  costPricePaise       Int                   @default(0)
+  costPrice            Int                   @default(0)
+  taxRateBps           Int                   @default(0)
+  taxName              String?
+  taxRuleId            String?
+  taxRule              TaxRule?              @relation(fields: [taxRuleId], references: [id], onDelete: SetNull)
+  notes                String?
+  isActive             Boolean               @default(true)
+  active               Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
-  subscriptionLines   SubscriptionLine[]
+  variants             ProductVariant[]
+  subscriptionLines    SubscriptionLine[]
+  quoteTemplateLines   QuoteTemplateLine[]
   productDiscountLinks ProductDiscountLink[]
 }
 
-model TaxRule {
-  id        String   @id @default(cuid())
-  name      String
-  rateBps   Int      // basis points, e.g. 1800 for 18%
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model ProductVariant {
+  id                   String              @id @default(cuid())
+  productId            String
+  product              Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  optionName           String
+  value                String
+  priceAdjustmentPaise Int                 @default(0)
+  priceAdjustment      Int                 @default(0)
+  isActive             Boolean             @default(true)
+  active               Boolean             @default(true)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  quoteTemplateLines   QuoteTemplateLine[]
+  subscriptionLines    SubscriptionLine[]
 }
+
+model Plan {
+  id                    String          @id @default(cuid())
+  code                  String          @unique
+  name                  String
+  description           String?
+  pricePaise            Int             @default(0)
+  basePricePaise        Int             @default(0)
+  basePrice             Int             @default(0)
+  billingInterval       String          @default("MONTHLY") // DAILY, WEEKLY, MONTHLY, YEARLY
+  interval              String          @default("MONTHLY")
+  taxRateBps            Int             @default(0)
+  taxName               String?
+  taxRuleId             String?
+  taxRule               TaxRule?        @relation(fields: [taxRuleId], references: [id], onDelete: SetNull)
+  minQuantity           Int             @default(1)
+  minimumQuantity       Int             @default(1)
+  availableFrom         DateTime?
+  availableUntil        DateTime?
+  availabilityStartDate DateTime?
+  availabilityEndDate   DateTime?
+  autoCloseAtEnd        Boolean         @default(false)
+  canCloseEarly         Boolean         @default(true)
+  canPause              Boolean         @default(true)
+  canRenew              Boolean         @default(true)
+  isActive              Boolean         @default(true)
+  active                Boolean         @default(true)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  subscriptions         Subscription[]
+  quoteTemplates        QuoteTemplate[]
+}
+
+// ----------------------------------------------------
+// QUOTATION TEMPLATES (Levin Module)
+// ----------------------------------------------------
+
+model QuoteTemplate {
+  id          String              @id @default(cuid())
+  name        String
+  description String?
+  planId      String
+  plan        Plan                @relation(fields: [planId], references: [id])
+  validDays   Int                 @default(30)
+  isActive    Boolean             @default(true)
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  lines       QuoteTemplateLine[]
+}
+
+model QuoteTemplateLine {
+  id             String          @id @default(cuid())
+  templateId     String
+  template       QuoteTemplate   @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product         @relation(fields: [productId], references: [id])
+  variantId      String?
+  variant        ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  quantity       Int             @default(1)
+  unitPricePaise Int
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+// ----------------------------------------------------
+// SUBSCRIPTIONS (Levin & Joshil)
+// ----------------------------------------------------
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  subscriptionNo      String             @unique
+  customerId          String
+  customer            Customer           @relation(fields: [customerId], references: [id])
+  planId              String
+  plan                Plan               @relation(fields: [planId], references: [id])
+  createdByUserId     String?
+  status              String             @default("ACTIVE") // DRAFT, QUOTATION, CONFIRMED, ACTIVE, PAUSED, CLOSED, EXPIRED
+  startDate           DateTime
+  expiresAt           DateTime?
+  nextBillingAt       DateTime
+  paymentTermsDays    Int                @default(15)
+  planNameSnapshot    String
+  planPricePaise      Int
+  billingInterval     String             // DAILY, WEEKLY, MONTHLY, YEARLY
+  planTaxNameSnapshot String?
+  planTaxRateBps      Int                @default(0)
+  autoCloseAtEnd      Boolean            @default(false)
+  canCloseEarly       Boolean            @default(true)
+  canPause            Boolean            @default(true)
+  canRenew            Boolean            @default(true)
+  recurringTotalPaise Int                @default(0)
+  quoteExpiresAt      DateTime?
+  confirmedAt         DateTime?
+  activatedAt         DateTime?
+  closedAt            DateTime?
+  pausedAt            DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  lines               SubscriptionLine[]
+  invoices            Invoice[]
+}
+
+model SubscriptionLine {
+  id                  String          @id @default(cuid())
+  subscriptionId      String
+  subscription        Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  productId           String?
+  product             Product?        @relation(fields: [productId], references: [id])
+  variantId           String?
+  variant             ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  descriptionSnapshot String
+  skuSnapshot         String?
+  variantSnapshot     String?
+  quantity            Int             @default(1)
+  unitPricePaise      Int
+  taxNameSnapshot     String?
+  taxRateBps          Int             @default(0)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+}
+
+// ----------------------------------------------------
+// DISCOUNTS (Joshil)
+// ----------------------------------------------------
 
 model DiscountRule {
   id               String                @id @default(cuid())
   name             String
-  type             String                // "FIXED" | "PERCENTAGE"
-  scope            String                // "PRODUCT" | "SUBSCRIPTION"
+  type             String                @default("PERCENTAGE") // "FIXED" | "PERCENTAGE"
+  scope            String                @default("PRODUCT") // "PRODUCT" | "SUBSCRIPTION"
   value            Int                   // paise if FIXED, bps (0..10000) if PERCENTAGE
   minPurchasePaise Int                   @default(0)
   minQuantity      Int                   @default(0)
@@ -81,6 +282,7 @@ model DiscountRule {
   usageLimit       Int?
   usedCount        Int                   @default(0)
   isActive         Boolean               @default(true)
+  active           Boolean               @default(true)
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 
@@ -99,52 +301,9 @@ model ProductDiscountLink {
   @@unique([discountRuleId, productId])
 }
 
-model Subscription {
-  id                  String             @id @default(cuid())
-  subscriptionNo      String             @unique
-  customerId          String
-  planId              String
-  status              String             @default("ACTIVE") // DRAFT, QUOTATION, CONFIRMED, ACTIVE, PAUSED, CLOSED, EXPIRED
-  startDate           DateTime
-  expiresAt           DateTime?
-  nextBillingAt       DateTime
-  paymentTermsDays    Int                @default(15)
-  planNameSnapshot    String
-  planPricePaise      Int
-  billingInterval     String             // DAILY, WEEKLY, MONTHLY, YEARLY
-  planTaxNameSnapshot String?
-  planTaxRateBps      Int                @default(0)
-  autoCloseAtEnd      Boolean            @default(false)
-  canCloseEarly       Boolean            @default(true)
-  canPause            Boolean            @default(true)
-  canRenew            Boolean            @default(true)
-  recurringTotalPaise Int                @default(0)
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-
-  customer            Customer           @relation(fields: [customerId], references: [id])
-  plan                Plan               @relation(fields: [planId], references: [id])
-  lines               SubscriptionLine[]
-  invoices            Invoice[]
-}
-
-model SubscriptionLine {
-  id                  String       @id @default(cuid())
-  subscriptionId      String
-  productId           String?
-  descriptionSnapshot String
-  skuSnapshot         String?
-  variantSnapshot     String?
-  quantity            Int          @default(1)
-  unitPricePaise      Int
-  taxNameSnapshot     String?
-  taxRateBps          Int          @default(0)
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-
-  subscription        Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  product             Product?     @relation(fields: [productId], references: [id])
-}
+// ----------------------------------------------------
+// INVOICES & PAYMENTS (Joshil & Joe)
+// ----------------------------------------------------
 
 model Invoice {
   id                   String        @id @default(cuid())
@@ -163,6 +322,7 @@ model Invoice {
   discountRuleId       String?
   discountNameSnapshot String?
   sentAt               DateTime?
+  paidAt               DateTime?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
@@ -170,6 +330,7 @@ model Invoice {
   customer             Customer      @relation(fields: [customerId], references: [id])
   discountRule         DiscountRule? @relation(fields: [discountRuleId], references: [id])
   lines                InvoiceLine[]
+  payments             Payment[]
 
   @@unique([subscriptionId, periodStart])
 }
@@ -191,4 +352,23 @@ model InvoiceLine {
   updatedAt           DateTime @updatedAt
 
   invoice             Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  paymentNo        String        @unique @default(cuid())
+  invoiceId        String
+  invoice          Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  recordedByUserId String?
+  recordedByUser   User?         @relation("RecordedPayments", fields: [recordedByUserId], references: [id], onDelete: SetNull)
+  amount           Int           @default(0)
+  amountPaise      Int           @default(0)
+  paymentMethod    String        @default("CARD")
+  method           String        @default("CARD")
+  reference        String?
+  paidAt           DateTime      @default(now())
+  notes            String?
+  note             String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }

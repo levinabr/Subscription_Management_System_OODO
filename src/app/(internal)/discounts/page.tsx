@@ -181,7 +181,7 @@ export default function DiscountsPage() {
           <div className="p-12 text-center text-slate-400 text-sm">Loading discount rules...</div>
         ) : discounts.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-sm">
-            No discount rules configured yet. Click "Create Discount Rule" to set one up.
+            No discount rules configured yet. Click &quot;Create Discount Rule&quot; to set one up.
           </div>
         ) : (
           <div className="overflow-x-auto">
