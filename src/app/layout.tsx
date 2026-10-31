@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Brightloop — Subscription Control Center",
   description:
-    "Enterprise recurring billing, multi-tier product catalog, tax rule management, and customer subscriptions.",
+    "Enterprise recurring billing, multi-tier product catalog, tax rule management, payment recording, and customer subscriptions.",
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white">
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white font-sans">
         {children}
       </body>
     </html>

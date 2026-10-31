@@ -85,7 +85,7 @@ export class AuthService {
       },
     });
 
-    if (!user) {
+    if (!user || !user.passwordHash) {
       throw ApiError.unauthorized("Invalid email or password.");
     }
 
@@ -97,7 +97,7 @@ export class AuthService {
     const sessionToken = await createSession(user.id);
     await setSessionCookie(sessionToken);
 
-    const { passwordHash: _, ...safeUser } = user;
+    const { passwordHash: _, password: _p, ...safeUser } = user;
     return safeUser;
   }
 

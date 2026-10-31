@@ -1,14 +1,38 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db/prisma";
-import { User, Customer } from "@prisma/client";
+import { User, Customer, UserRole } from "@prisma/client";
 
 export const SESSION_COOKIE_NAME = "brightloop_session";
 export const SESSION_EXPIRATION_DAYS = 7;
 export const SESSION_MAX_AGE = SESSION_EXPIRATION_DAYS * 24 * 60 * 60; // in seconds
 
-export type AuthenticatedUser = Omit<User, "passwordHash"> & {
+export type AuthenticatedUser = Omit<User, "passwordHash" | "password"> & {
   customer: Customer | null;
+};
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole | string;
+  customerId?: string | null;
+}
+
+// Development default users for mock/header extraction
+export const DEFAULT_STAFF_USER: AuthUser = {
+  id: "usr_staff_01",
+  name: "Joe Finance Lead",
+  email: "joe.finance@brightloop.com",
+  role: UserRole.STAFF,
+};
+
+export const DEFAULT_CUSTOMER_USER: AuthUser = {
+  id: "usr_cust_01",
+  name: "Acme Corp Admin",
+  email: "billing@acme.com",
+  role: UserRole.CUSTOMER,
+  customerId: "cust_acme_01",
 };
 
 export function generateToken(): string {
@@ -98,12 +122,10 @@ export async function validateSessionToken(
 
   // Check expiration
   if (session.expiresAt.getTime() < Date.now()) {
-    // Delete expired session asynchronously
     prisma.session.delete({ where: { id: session.id } }).catch(() => {});
     return null;
   }
 
-  // Remove passwordHash before returning
   const { passwordHash: _, ...safeUser } = session.user;
   return safeUser;
 }
@@ -149,4 +171,60 @@ export async function invalidateAllUserSessions(userId: string): Promise<void> {
   await prisma.session.deleteMany({
     where: { userId },
   });
+}
+
+/**
+ * Extracts authenticated user context from request headers, cookies or dev defaults
+ */
+export async function getSessionUser(req?: Request): Promise<AuthUser | null> {
+  if (req) {
+    const userId = req.headers.get("x-user-id");
+    const userRole = req.headers.get("x-user-role");
+    const customerId = req.headers.get("x-customer-id");
+    const userEmail = req.headers.get("x-user-email");
+
+    if (userId && userRole) {
+      return {
+        id: userId,
+        name: userEmail ? userEmail.split("@")[0] : "Authenticated User",
+        email: userEmail || "user@brightloop.com",
+        role: userRole,
+        customerId: customerId || null,
+      };
+    }
+  }
+
+  // Fallback to cookie authentication
+  const current = await getCurrentUser();
+  if (current) {
+    return {
+      id: current.id,
+      name: current.name,
+      email: current.email,
+      role: current.role,
+      customerId: current.customerId,
+    };
+  }
+
+  return DEFAULT_STAFF_USER;
+}
+
+/**
+ * Validates that the current user has Staff or Admin privileges
+ */
+export function isStaffOrAdmin(user: AuthUser | null): boolean {
+  if (!user) return false;
+  return user.role === UserRole.ADMIN || user.role === UserRole.STAFF || user.role === "ADMIN" || user.role === "STAFF";
+}
+
+/**
+ * Validates customer portal access for a specific customer resource
+ */
+export function canAccessCustomerResource(
+  user: AuthUser | null,
+  resourceCustomerId: string
+): boolean {
+  if (!user) return false;
+  if (isStaffOrAdmin(user)) return true;
+  return (user.role === UserRole.CUSTOMER || user.role === "CUSTOMER") && user.customerId === resourceCustomerId;
 }

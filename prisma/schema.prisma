@@ -17,6 +17,12 @@ enum UserRole {
   CUSTOMER
 }
 
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
 enum ProductType {
   SOFTWARE
   SERVICE
@@ -39,6 +45,7 @@ enum SubscriptionStatus {
   PAUSED
   CLOSED
   EXPIRED
+  CANCELLED
 }
 
 enum InvoiceStatus {
@@ -74,10 +81,12 @@ model User {
   id                  String               @id @default(cuid())
   name                String
   email               String               @unique
-  passwordHash        String
+  passwordHash        String?
+  password            String?
   role                UserRole             @default(CUSTOMER)
   customerId          String?
   customer            Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  payments            Payment[]            @relation("RecordedPayments")
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
   createdAt           DateTime             @default(now())
@@ -90,16 +99,21 @@ model User {
 
 model Customer {
   id            String         @id @default(cuid())
-  companyName   String
-  contactName   String
-  email         String
+  companyName   String         @default("Brightloop Customer")
+  businessName  String?
+  contactName   String         @default("Primary Contact")
+  email         String         @default("billing@brightloop.io")
+  billingEmail  String?        @unique
   phone         String?
   address       String?
+  addressLine1  String?
+  addressLine2  String?
   city          String?
   state         String?
   postalCode    String?
   country       String?        @default("IN")
   taxIdentifier String?
+  taxId         String?
   active        Boolean        @default(true)
   users         User[]
   subscriptions Subscription[]
@@ -270,24 +284,29 @@ model Subscription {
   id                          String             @id @default(cuid())
   subscriptionNo              String             @unique
   customerId                  String
-  customer                    Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customer                    Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
   planId                      String?
   plan                        Plan?              @relation(fields: [planId], references: [id], onDelete: SetNull)
   status                      SubscriptionStatus @default(DRAFT)
   startDate                   DateTime
   endDate                     DateTime?
-  currentPeriodStart          DateTime
-  currentPeriodEnd            DateTime
+  expiresAt                   DateTime?
+  currentPeriodStart          DateTime           @default(now())
+  currentPeriodEnd            DateTime           @default(now())
+  nextBillingAt               DateTime?
   cancelAtPeriodEnd           Boolean            @default(false)
   cancelledAt                 DateTime?
   pausedAt                    DateTime?
 
   // Snapshots for contractual price preservation
-  planSnapshotName            String
-  planSnapshotCode            String
-  planSnapshotBillingInterval BillingInterval
-  planSnapshotBasePrice       Int                // In integer paise
+  planSnapshotName            String             @default("Standard Plan")
+  planNameSnapshot            String?
+  planSnapshotCode            String             @default("STD")
+  planSnapshotBillingInterval BillingInterval    @default(MONTHLY)
+  billingInterval             BillingInterval    @default(MONTHLY)
+  planSnapshotBasePrice       Int                @default(0) // In integer paise
   taxRateSnapshot             Int                @default(0) // In basis points
+  recurringTotalPaise         Int?
 
   lines                       SubscriptionLine[]
   invoices                    Invoice[]
@@ -365,31 +384,38 @@ model ProductDiscountLink {
 model Invoice {
   id             String        @id @default(cuid())
   invoiceNo      String        @unique
-  subscriptionId String
-  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   customerId     String
-  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   status         InvoiceStatus @default(DRAFT)
   periodStart    DateTime
   periodEnd      DateTime
   issueDate      DateTime      @default(now())
-  dueDate        DateTime
-  subtotal       Int           // In integer paise
-  taxTotal       Int           // In integer paise
+  issuedAt       DateTime      @default(now())
+  dueDate        DateTime      @default(now())
+  dueAt          DateTime      @default(now())
+  subtotal       Int           @default(0) // In integer paise
+  subtotalPaise  Int           @default(0)
+  taxTotal       Int           @default(0) // In integer paise
+  taxPaise       Int           @default(0)
   discountTotal  Int           @default(0) // In integer paise
-  total          Int           // In integer paise
+  discountPaise  Int           @default(0)
+  total          Int           @default(0) // In integer paise
+  totalPaise     Int           @default(0)
   amountPaid     Int           @default(0) // In integer paise
+  paidAt         DateTime?
   lines          InvoiceLine[]
   payments       Payment[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  @@unique([subscriptionId, periodStart])
   @@index([invoiceNo])
   @@index([customerId])
   @@index([subscriptionId])
   @@index([status])
   @@index([dueDate])
+  @@index([dueAt])
 }
 
 model InvoiceLine {
@@ -398,12 +424,15 @@ model InvoiceLine {
   invoice             Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   description         String
   quantity            Int      @default(1)
-  unitPrice           Int      // In integer paise
-  subtotal            Int      // In integer paise
+  unitPrice           Int      @default(0) // In integer paise
+  unitPricePaise      Int      @default(0)
+  subtotal            Int      @default(0) // In integer paise
   taxRate             Int      @default(0) // In basis points
   taxAmount           Int      @default(0) // In integer paise
+  taxPaise            Int      @default(0)
   discountAmount      Int      @default(0) // In integer paise
-  total               Int      // In integer paise
+  total               Int      @default(0) // In integer paise
+  totalPaise          Int      @default(0)
 
   // Snapshots
   productSkuSnapshot  String?
@@ -416,19 +445,25 @@ model InvoiceLine {
 }
 
 model Payment {
-  id            String        @id @default(cuid())
-  paymentNo     String        @unique
-  invoiceId     String
-  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
-  amount        Int           // In integer paise
-  paymentMethod PaymentMethod @default(CARD)
-  reference     String?
-  paidAt        DateTime      @default(now())
-  notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id               String        @id @default(cuid())
+  paymentNo        String        @unique @default(cuid())
+  invoiceId        String
+  invoice          Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  recordedByUserId String?
+  recordedByUser   User?         @relation("RecordedPayments", fields: [recordedByUserId], references: [id], onDelete: SetNull)
+  amount           Int           @default(0) // In integer paise
+  amountPaise      Int           @default(0)
+  paymentMethod    PaymentMethod @default(CARD)
+  method           PaymentMethod @default(CARD)
+  reference        String?
+  paidAt           DateTime      @default(now())
+  notes            String?
+  note             String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@index([invoiceId])
   @@index([paymentMethod])
   @@index([paidAt])
+  @@index([method])
 }

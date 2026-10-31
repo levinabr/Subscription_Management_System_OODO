@@ -61,7 +61,7 @@ export default async function HomePage() {
         </h1>
 
         <p className="text-lg text-slate-400 max-w-2xl leading-relaxed">
-          The unified engine for recurring contracts, multi-tier product catalog, basis-point tax rules, and enterprise multi-tenant billing.
+          The unified engine for recurring contracts, multi-tier product catalog, basis-point tax rules, payment recording, and enterprise multi-tenant billing.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
