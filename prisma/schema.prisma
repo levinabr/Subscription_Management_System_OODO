@@ -1,0 +1,154 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum InvoiceStatus {
+  DRAFT
+  CONFIRMED
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CASH
+  CARD
+  UPI
+  OTHER
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+enum SubscriptionStatus {
+  DRAFT
+  QUOTATION
+  CONFIRMED
+  ACTIVE
+  PAUSED
+  CLOSED
+  CANCELLED
+}
+
+enum BillingInterval {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  name       String
+  password   String?
+  role       Role      @default(STAFF)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  payments   Payment[] @relation("RecordedPayments")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Customer {
+  id            String         @id @default(cuid())
+  businessName  String
+  billingEmail  String         @unique
+  phone         String?
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+  taxId         String?
+  users         User[]
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  subscriptionNo      String             @unique
+  customerId          String
+  customer            Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status              SubscriptionStatus @default(DRAFT)
+  planNameSnapshot    String
+  billingInterval     BillingInterval    @default(MONTHLY)
+  startDate           DateTime
+  expiresAt           DateTime?
+  nextBillingAt       DateTime?
+  recurringTotalPaise Int
+  invoices            Invoice[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  invoiceNo      String        @unique
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  periodStart    DateTime
+  periodEnd      DateTime
+  issuedAt       DateTime
+  dueAt          DateTime
+  status         InvoiceStatus @default(DRAFT)
+  subtotalPaise  Int           @default(0)
+  discountPaise  Int           @default(0)
+  taxPaise       Int           @default(0)
+  totalPaise     Int           @default(0)
+  paidAt         DateTime?
+  payments       Payment[]
+  lines          InvoiceLine[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([dueAt])
+}
+
+model InvoiceLine {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description    String
+  quantity       Int      @default(1)
+  unitPricePaise Int
+  taxPaise       Int      @default(0)
+  totalPaise     Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  invoiceId        String
+  invoice          Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  recordedByUserId String
+  recordedByUser   User          @relation("RecordedPayments", fields: [recordedByUserId], references: [id])
+  amountPaise      Int
+  method           PaymentMethod
+  paidAt           DateTime
+  reference        String?
+  note             String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([invoiceId])
+  @@index([paidAt])
+  @@index([method])
+}
