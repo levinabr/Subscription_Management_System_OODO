@@ -213,7 +213,7 @@ async function runTests() {
 
   const adminView = await ProductService.getProductById(createdProduct.id, adminAuth);
   assert(
-    adminView.costPrice === productInput.costPrice,
+    "costPrice" in adminView && adminView.costPrice === productInput.costPrice,
     "Cost price is visible to Admin role"
   );
 
