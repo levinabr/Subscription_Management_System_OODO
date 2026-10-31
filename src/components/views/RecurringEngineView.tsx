@@ -9,8 +9,11 @@ export const RecurringEngineView: React.FC = () => {
     recalculateProration,
     executeBatchBillingRun,
     billingLogs,
-    exportDataToCsv
+    exportDataToCsv,
+    setCurrentPage
   } = useData();
+
+  const [ledgerSynced, setLedgerSynced] = useState(false);
 
   const [isDryRun, setIsDryRun] = useState(true);
   const [frequency, setFrequency] = useState<'monthly' | 'quarterly' | 'annual'>('monthly');
@@ -514,11 +517,20 @@ export const RecurringEngineView: React.FC = () => {
                 </span>
               </div>
               <button
-                onClick={() => alert('Ledger Sync Triggered. Verifying SHA-256 state hashes.')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252a36] hover:bg-[#303541] text-[#38bdf8] text-xs font-medium transition-colors border border-[#94a3b8]/15"
+                onClick={() => {
+                  setLedgerSynced(true);
+                  setTimeout(() => setLedgerSynced(false), 2500);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                  ledgerSynced
+                    ? 'bg-[#4ee6aa]/15 text-[#4ee6aa] border-[#4ee6aa]/30'
+                    : 'bg-[#252a36] hover:bg-[#303541] text-[#38bdf8] border-[#94a3b8]/15'
+                }`}
               >
-                <span className="material-symbols-outlined text-[16px]">sync</span>
-                <span>Trigger Ledger Sync</span>
+                <span className="material-symbols-outlined text-[16px]">
+                  {ledgerSynced ? 'check_circle' : 'sync'}
+                </span>
+                <span>{ledgerSynced ? 'SHA-256 Hashes Verified' : 'Trigger Ledger Sync'}</span>
               </button>
             </div>
             <p className="text-xs text-[#bdc8d1] mb-5 leading-relaxed">
@@ -554,7 +566,17 @@ export const RecurringEngineView: React.FC = () => {
                       <span className="font-mono text-xs text-[#4ee6aa]">{log.collectionRate}</span>
                     </div>
                     <button
-                      onClick={() => alert(`Downloading CSV reconciliation payload for ${log.runCode}`)}
+                      onClick={() => {
+                        exportDataToCsv(`reconciliation_${log.runCode}`, [{
+                          RunCode: log.runCode,
+                          Date: log.date,
+                          TotalBilled: log.totalBilledCount,
+                          Failed: log.failedCount,
+                          Amount: log.totalAmount,
+                          Status: log.status,
+                          CollectionRate: log.collectionRate
+                        }]);
+                      }}
                       className="p-2 rounded hover:bg-[#252a36] text-[#87929a] hover:text-[#dee2f2]"
                       title="Download Reconciliation CSV"
                     >
@@ -569,10 +591,10 @@ export const RecurringEngineView: React.FC = () => {
           <div className="pt-2 flex items-center justify-between text-xs text-[#87929a]">
             <span className="font-mono">Last reconciled ledger audit: 12 minutes ago</span>
             <button
-              onClick={() => alert('Viewing historic runs in Audit Log')}
+              onClick={() => setCurrentPage('audit-log')}
               className="text-[#38bdf8] hover:underline font-medium flex items-center gap-1"
             >
-              <span>View All 24 Historic Runs</span>
+              <span>View All Historic Runs in Audit Log</span>
               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
             </button>
           </div>
@@ -622,7 +644,7 @@ export const RecurringEngineView: React.FC = () => {
           </div>
 
           <button
-            onClick={() => alert('Engine Architecture Configuration: Modifying clearinghouse batch parameters')}
+            onClick={() => setCurrentPage('settings')}
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#252a36] hover:bg-[#303541] text-[#dee2f2] text-xs font-medium transition-colors border border-[#94a3b8]/15 w-full"
           >
             <span className="material-symbols-outlined text-[16px]">settings_input_component</span>

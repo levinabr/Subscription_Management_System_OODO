@@ -175,6 +175,91 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
 
+        {/* Administrative Modules & Rule Engines */}
+        <div className="rounded-xl bg-[#161b27]/80 backdrop-blur-md border border-[#94a3b8]/15 p-6 shadow-md flex flex-col gap-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#94a3b8]/15">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#38bdf8] text-[20px]">admin_panel_settings</span>
+              <h3 className="text-base font-semibold text-[#dee2f2]">Administrative Rule Engines & Portals</h3>
+            </div>
+            <span className="text-xs font-mono text-[#38bdf8]">ADMIN ONLY</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a
+              href="/discounts"
+              target="_blank"
+              rel="noreferrer"
+              className="p-4 rounded-xl bg-[#090e19]/60 border border-[#94a3b8]/10 hover:border-[#38bdf8]/40 flex flex-col justify-between transition-all group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="p-2 rounded-lg bg-[#38bdf8]/15 text-[#38bdf8]">
+                  <span className="material-symbols-outlined text-[18px]">sell</span>
+                </span>
+                <span className="material-symbols-outlined text-[16px] text-[#87929a] group-hover:text-[#38bdf8] transition-colors">open_in_new</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-[#dee2f2] group-hover:text-[#38bdf8] transition-colors">Discount Rules</h4>
+                <p className="text-[11px] text-[#87929a] mt-0.5">Fixed & % rules, usage limits, product & sub scopes</p>
+              </div>
+            </a>
+
+            <a
+              href="/catalog/taxes"
+              target="_blank"
+              rel="noreferrer"
+              className="p-4 rounded-xl bg-[#090e19]/60 border border-[#94a3b8]/10 hover:border-[#4ee6aa]/40 flex flex-col justify-between transition-all group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="p-2 rounded-lg bg-[#4ee6aa]/15 text-[#4ee6aa]">
+                  <span className="material-symbols-outlined text-[18px]">account_balance</span>
+                </span>
+                <span className="material-symbols-outlined text-[16px] text-[#87929a] group-hover:text-[#4ee6aa] transition-colors">open_in_new</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-[#dee2f2] group-hover:text-[#4ee6aa] transition-colors">Tax Rates & Nexus</h4>
+                <p className="text-[11px] text-[#87929a] mt-0.5">Automated tax nexus rules and rate calculations</p>
+              </div>
+            </a>
+
+            <a
+              href="/staff"
+              target="_blank"
+              rel="noreferrer"
+              className="p-4 rounded-xl bg-[#090e19]/60 border border-[#94a3b8]/10 hover:border-[#bdc2ff]/40 flex flex-col justify-between transition-all group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="p-2 rounded-lg bg-[#bdc2ff]/15 text-[#bdc2ff]">
+                  <span className="material-symbols-outlined text-[18px]">badge</span>
+                </span>
+                <span className="material-symbols-outlined text-[16px] text-[#87929a] group-hover:text-[#bdc2ff] transition-colors">open_in_new</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-[#dee2f2] group-hover:text-[#bdc2ff] transition-colors">Staff & Team RBAC</h4>
+                <p className="text-[11px] text-[#87929a] mt-0.5">Admin provisioning for internal staff accounts</p>
+              </div>
+            </a>
+
+            <a
+              href="/portal/dashboard"
+              target="_blank"
+              rel="noreferrer"
+              className="p-4 rounded-xl bg-[#090e19]/60 border border-[#94a3b8]/10 hover:border-[#ffb4ab]/40 flex flex-col justify-between transition-all group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="p-2 rounded-lg bg-[#ffb4ab]/15 text-[#ffb4ab]">
+                  <span className="material-symbols-outlined text-[18px]">person</span>
+                </span>
+                <span className="material-symbols-outlined text-[16px] text-[#87929a] group-hover:text-[#ffb4ab] transition-colors">open_in_new</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-[#dee2f2] group-hover:text-[#ffb4ab] transition-colors">Customer Portal</h4>
+                <p className="text-[11px] text-[#87929a] mt-0.5">Self-service subscription and invoice dashboard</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
         {/* Submit */}
         <div className="flex items-center justify-end">
           <button

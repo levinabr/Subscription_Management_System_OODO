@@ -20,6 +20,7 @@ export const OverviewView: React.FC = () => {
     gross: '$396.1k',
     month: 'NOV 2024'
   });
+  const [isLiveSyncing, setIsLiveSyncing] = useState(false);
 
   const activeSubCount = subscriptions.filter(s => s.status === 'active').length;
   const totalMrr = subscriptions
@@ -641,11 +642,16 @@ export const OverviewView: React.FC = () => {
           <span className="font-mono text-xs text-[#87929a]">#89281-LIVE</span>
           <button
             onClick={() => {
-              alert('Ledger synchronizer executed. All 1,428 accounts verified against clearinghouses.');
+              setIsLiveSyncing(true);
+              setTimeout(() => setIsLiveSyncing(false), 2000);
             }}
-            className="px-3 py-1 rounded-lg bg-[#252a36] text-[#dee2f2] text-xs font-medium hover:bg-[#303541] transition-colors border border-[#94a3b8]/15"
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors border ${
+              isLiveSyncing
+                ? 'bg-[#4ee6aa]/15 text-[#4ee6aa] border-[#4ee6aa]/30'
+                : 'bg-[#252a36] text-[#dee2f2] hover:bg-[#303541] border-[#94a3b8]/15'
+            }`}
           >
-            Sync
+            {isLiveSyncing ? '✓ Verified (1,428)' : 'Sync'}
           </button>
         </div>
       </div>

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 
 export const ProductsPlansView: React.FC = () => {
-  const { plans, products, addPlan, addProduct, exportDataToCsv } = useData();
+  const { plans, products, addPlan, addProduct, exportDataToCsv, setIsNewSubModalOpen } = useData();
 
   const [activeTab, setActiveTab] = useState<'plans' | 'products'>('plans');
   const [isAddPlanModal, setIsAddPlanModal] = useState(false);
@@ -170,7 +170,7 @@ export const ProductsPlansView: React.FC = () => {
 
               <div className="mt-6 pt-4 border-t border-[#94a3b8]/15">
                 <button
-                  onClick={() => alert(`Selected ${plan.name} for configuration.`)}
+                  onClick={() => setIsNewSubModalOpen(true)}
                   className={`w-full py-2.5 rounded-lg text-xs font-semibold transition-all ${
                     plan.recommended
                       ? 'bg-[#38bdf8] text-[#00354a] hover:bg-[#8ed5ff]'

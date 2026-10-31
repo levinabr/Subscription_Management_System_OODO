@@ -3,14 +3,19 @@ import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 
 export const BulkSubscriptionModal: React.FC = () => {
-  const { isBulkSubModalOpen, setIsBulkSubModalOpen, subscriptions } = useData();
+  const { isBulkSubModalOpen, setIsBulkSubModalOpen, bulkUpdateSubscriptions, subscriptions } = useData();
   const [bulkOp, setBulkOp] = useState<'pause' | 'resume'>('pause');
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   if (!isBulkSubModalOpen) return null;
 
   const handleExecute = () => {
-    alert(`Bulk ${bulkOp} executed safely across selected cohort. Anchor renewal dates preserved.`);
-    setIsBulkSubModalOpen(false);
+    bulkUpdateSubscriptions(bulkOp);
+    setSuccessMsg(`Bulk ${bulkOp} executed safely across selected cohort. Anchor renewal dates preserved.`);
+    setTimeout(() => {
+      setSuccessMsg(null);
+      setIsBulkSubModalOpen(false);
+    }, 1200);
   };
 
   return (
@@ -33,17 +38,23 @@ export const BulkSubscriptionModal: React.FC = () => {
           Perform scheduled state updates across filtered cohorts without resetting renewal anchor dates.
         </p>
 
+        {successMsg && (
+          <div className="p-3 rounded-lg bg-[#4ee6aa]/15 border border-[#4ee6aa]/30 text-[#4ee6aa] text-xs font-medium flex items-center gap-2 animate-in fade-in">
+            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>{successMsg}</span>
+          </div>
+        )}
+
         <div className="flex flex-col gap-3">
           <label className="text-[10px] font-semibold uppercase tracking-wider text-[#87929a]">
             Target Operation
           </label>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <label
-              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                bulkOp === 'pause'
+              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${bulkOp === 'pause'
                   ? 'bg-[#1b1f2b] border-[#38bdf8] text-[#dee2f2]'
                   : 'bg-[#161b27] border-[#94a3b8]/15 text-[#87929a]'
-              }`}
+                }`}
             >
               <input
                 type="radio"
@@ -56,11 +67,10 @@ export const BulkSubscriptionModal: React.FC = () => {
             </label>
 
             <label
-              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                bulkOp === 'resume'
+              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${bulkOp === 'resume'
                   ? 'bg-[#1b1f2b] border-[#38bdf8] text-[#dee2f2]'
                   : 'bg-[#161b27] border-[#94a3b8]/15 text-[#87929a]'
-              }`}
+                }`}
             >
               <input
                 type="radio"
