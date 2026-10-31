@@ -1,0 +1,194 @@
+// Prisma schema for Brightloop Subscription Management System
+// Owned by Amal (Prompt 2). Maintained with strict alignment.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  company       String?
+  address       String?
+  phone         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  subscriptions Subscription[]
+  invoices      Invoice[]
+}
+
+model Plan {
+  id              String         @id @default(cuid())
+  name            String
+  code            String         @unique
+  pricePaise      Int
+  billingInterval String         // DAILY, WEEKLY, MONTHLY, YEARLY
+  taxRateBps      Int            @default(0)
+  taxName         String?
+  minQuantity     Int            @default(1)
+  autoCloseAtEnd  Boolean        @default(false)
+  canCloseEarly   Boolean        @default(true)
+  canPause        Boolean        @default(true)
+  canRenew        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  subscriptions   Subscription[]
+}
+
+model Product {
+  id              String                @id @default(cuid())
+  name            String
+  sku             String                @unique
+  salesPricePaise Int
+  costPricePaise  Int                   @default(0)
+  taxRateBps      Int                   @default(0)
+  taxName         String?
+  notes           String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  subscriptionLines   SubscriptionLine[]
+  productDiscountLinks ProductDiscountLink[]
+}
+
+model TaxRule {
+  id        String   @id @default(cuid())
+  name      String
+  rateBps   Int      // basis points, e.g. 1800 for 18%
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DiscountRule {
+  id               String                @id @default(cuid())
+  name             String
+  type             String                // "FIXED" | "PERCENTAGE"
+  scope            String                // "PRODUCT" | "SUBSCRIPTION"
+  value            Int                   // paise if FIXED, bps (0..10000) if PERCENTAGE
+  minPurchasePaise Int                   @default(0)
+  minQuantity      Int                   @default(0)
+  startsAt         DateTime
+  endsAt           DateTime
+  usageLimit       Int?
+  usedCount        Int                   @default(0)
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  eligibleProducts ProductDiscountLink[]
+  invoices         Invoice[]
+}
+
+model ProductDiscountLink {
+  id             String       @id @default(cuid())
+  discountRuleId String
+  productId      String
+
+  discountRule   DiscountRule @relation(fields: [discountRuleId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([discountRuleId, productId])
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  subscriptionNo      String             @unique
+  customerId          String
+  planId              String
+  status              String             @default("ACTIVE") // DRAFT, QUOTATION, CONFIRMED, ACTIVE, PAUSED, CLOSED, EXPIRED
+  startDate           DateTime
+  expiresAt           DateTime?
+  nextBillingAt       DateTime
+  paymentTermsDays    Int                @default(15)
+  planNameSnapshot    String
+  planPricePaise      Int
+  billingInterval     String             // DAILY, WEEKLY, MONTHLY, YEARLY
+  planTaxNameSnapshot String?
+  planTaxRateBps      Int                @default(0)
+  autoCloseAtEnd      Boolean            @default(false)
+  canCloseEarly       Boolean            @default(true)
+  canPause            Boolean            @default(true)
+  canRenew            Boolean            @default(true)
+  recurringTotalPaise Int                @default(0)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  customer            Customer           @relation(fields: [customerId], references: [id])
+  plan                Plan               @relation(fields: [planId], references: [id])
+  lines               SubscriptionLine[]
+  invoices            Invoice[]
+}
+
+model SubscriptionLine {
+  id                  String       @id @default(cuid())
+  subscriptionId      String
+  productId           String?
+  descriptionSnapshot String
+  skuSnapshot         String?
+  variantSnapshot     String?
+  quantity            Int          @default(1)
+  unitPricePaise      Int
+  taxNameSnapshot     String?
+  taxRateBps          Int          @default(0)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  subscription        Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  product             Product?     @relation(fields: [productId], references: [id])
+}
+
+model Invoice {
+  id                   String        @id @default(cuid())
+  invoiceNo            String        @unique
+  subscriptionId       String
+  customerId           String
+  periodStart          DateTime
+  periodEnd            DateTime
+  issuedAt             DateTime      @default(now())
+  dueAt                DateTime
+  status               String        @default("DRAFT") // DRAFT, CONFIRMED, PAID, CANCELLED
+  subtotalPaise        Int
+  discountPaise        Int           @default(0)
+  taxPaise             Int           @default(0)
+  totalPaise           Int
+  discountRuleId       String?
+  discountNameSnapshot String?
+  sentAt               DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  subscription         Subscription  @relation(fields: [subscriptionId], references: [id])
+  customer             Customer      @relation(fields: [customerId], references: [id])
+  discountRule         DiscountRule? @relation(fields: [discountRuleId], references: [id])
+  lines                InvoiceLine[]
+
+  @@unique([subscriptionId, periodStart])
+}
+
+model InvoiceLine {
+  id                  String   @id @default(cuid())
+  invoiceId           String
+  productId           String?
+  descriptionSnapshot String
+  quantity            Int
+  unitPricePaise      Int
+  subtotalPaise       Int
+  discountPaise       Int      @default(0)
+  taxablePaise        Int
+  taxRateBps          Int      @default(0)
+  taxPaise            Int      @default(0)
+  totalPaise          Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  invoice             Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
