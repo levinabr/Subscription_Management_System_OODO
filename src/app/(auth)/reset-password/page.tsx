@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
             Choose New Password
           </h1>
           <p className="text-sm text-slate-400">
-            Secure your Brightloop subscription credentials
+            Secure your PLANZO subscription credentials
           </p>
         </div>
 

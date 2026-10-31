@@ -56,7 +56,7 @@ export default function LoginPage() {
             <Sparkles className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            Brightloop Control Center
+            PLANZO Control Center
           </h1>
           <p className="text-sm text-slate-400">
             Sign in to manage subscriptions, catalog, and billing
@@ -134,7 +134,7 @@ export default function LoginPage() {
         {/* Demo credentials tip for evaluators / team */}
         <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 text-center">
           <span className="font-semibold text-indigo-300">Seed Admin Credentials: </span>
-          admin@brightloop.io / AdminPassword123!
+          admin@planzo.io / AdminPassword123!
         </div>
       </div>
     </div>

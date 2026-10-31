@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import FinanceSuiteApp from '@/components/FinanceSuiteApp';
 
 export default function HomePage() {
-  redirect('/invoices');
+  return <FinanceSuiteApp />;
 }

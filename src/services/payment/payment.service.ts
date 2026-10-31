@@ -151,7 +151,7 @@ export async function recordInvoicePayment(
           create: {
             id: recordedByUserId,
             name: 'Staff Member',
-            email: `staff-${recordedByUserId}@brightloop.com`,
+            email: `staff-${recordedByUserId}@planzo.com`,
             role: 'STAFF',
           },
         });

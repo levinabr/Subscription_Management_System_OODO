@@ -1,14 +1,20 @@
-import { PrismaClient, UserRole, BillingInterval, SubscriptionStatus, InvoiceStatus, PaymentMethod } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+
+const UserRole = { ADMIN: "ADMIN", STAFF: "STAFF", CUSTOMER: "CUSTOMER" } as const;
+const BillingInterval = { DAILY: "DAILY", WEEKLY: "WEEKLY", MONTHLY: "MONTHLY", YEARLY: "YEARLY" } as const;
+const SubscriptionStatus = { DRAFT: "DRAFT", QUOTATION: "QUOTATION", CONFIRMED: "CONFIRMED", ACTIVE: "ACTIVE", PAUSED: "PAUSED", CLOSED: "CLOSED", EXPIRED: "EXPIRED", CANCELLED: "CANCELLED" } as const;
+const InvoiceStatus = { DRAFT: "DRAFT", CONFIRMED: "CONFIRMED", PAID: "PAID", CANCELLED: "CANCELLED" } as const;
+const PaymentMethod = { BANK_TRANSFER: "BANK_TRANSFER", CASH: "CASH", CARD: "CARD", UPI: "UPI", OTHER: "OTHER" } as const;
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting Brightloop database seeding...");
+  console.log("🌱 Starting PLANZO database seeding...");
 
   // 1. Bootstrap Admin Account (Amal's Foundation)
-  const adminName = process.env.ADMIN_NAME || "Brightloop Admin";
-  const adminEmail = (process.env.ADMIN_EMAIL || "admin@brightloop.io").toLowerCase().trim();
+  const adminName = process.env.ADMIN_NAME || "PLANZO Admin";
+  const adminEmail = (process.env.ADMIN_EMAIL || "admin@PLANZO.io").toLowerCase().trim();
   const adminPassword = process.env.ADMIN_PASSWORD || "AdminPassword123!";
 
   console.log(`Checking bootstrap admin account: ${adminEmail}...`);
@@ -53,12 +59,12 @@ async function main() {
   // 3. Staff and Admin Users (Joe's Data)
   const staffHash = await bcrypt.hash("StaffPassword123!", 12);
   const staffJoe = await prisma.user.upsert({
-    where: { email: "joe.finance@brightloop.com" },
+    where: { email: "joe.finance@PLANZO.com" },
     update: {},
     create: {
       id: "usr_staff_01",
       name: "Joe Finance Lead",
-      email: "joe.finance@brightloop.com",
+      email: "joe.finance@PLANZO.com",
       passwordHash: staffHash,
       password: "StaffPassword123!",
       role: UserRole.STAFF,
@@ -66,12 +72,12 @@ async function main() {
   });
 
   const adminLevin = await prisma.user.upsert({
-    where: { email: "admin@brightloop.com" },
+    where: { email: "admin@PLANZO.com" },
     update: {},
     create: {
       id: "usr_admin_01",
       name: "Levin Admin",
-      email: "admin@brightloop.com",
+      email: "admin@PLANZO.com",
       passwordHash: staffHash,
       password: "AdminPassword123!",
       role: UserRole.ADMIN,
@@ -80,7 +86,7 @@ async function main() {
 
   // 4. Customers (Joe's Data)
   const customerAcme = await prisma.customer.upsert({
-    where: { billingEmail: "billing@acme.com" },
+    where: { email: "billing@acme.com" },
     update: {},
     create: {
       id: "cust_acme_01",
@@ -102,7 +108,7 @@ async function main() {
   });
 
   const customerGlobex = await prisma.customer.upsert({
-    where: { billingEmail: "finance@globex.org" },
+    where: { email: "finance@globex.org" },
     update: {},
     create: {
       id: "cust_globex_02",
@@ -124,7 +130,7 @@ async function main() {
   });
 
   const customerStark = await prisma.customer.upsert({
-    where: { billingEmail: "accounts@stark.io" },
+    where: { email: "accounts@stark.io" },
     update: {},
     create: {
       id: "cust_stark_03",
@@ -160,7 +166,49 @@ async function main() {
     },
   });
 
-  // 5. Subscriptions
+  // 5. Plans & Subscriptions
+  const planMonthly = await prisma.plan.upsert({
+    where: { code: "PLAN-ENT-MONTHLY" },
+    update: {},
+    create: {
+      id: "plan_monthly_01",
+      code: "PLAN-ENT-MONTHLY",
+      name: "Enterprise Cloud Suite (Monthly)",
+      pricePaise: 1000000,
+      basePricePaise: 1000000,
+      basePrice: 1000000,
+      billingInterval: "MONTHLY",
+    },
+  });
+
+  const planAnnual = await prisma.plan.upsert({
+    where: { code: "PLAN-BUS-ANNUAL" },
+    update: {},
+    create: {
+      id: "plan_annual_01",
+      code: "PLAN-BUS-ANNUAL",
+      name: "Annual Business Backbone",
+      pricePaise: 12000000,
+      basePricePaise: 12000000,
+      basePrice: 12000000,
+      billingInterval: "YEARLY",
+    },
+  });
+
+  const planWeekly = await prisma.plan.upsert({
+    where: { code: "PLAN-SYNC-WEEKLY" },
+    update: {},
+    create: {
+      id: "plan_weekly_01",
+      code: "PLAN-SYNC-WEEKLY",
+      name: "Weekly High-Volume Sync",
+      pricePaise: 250000,
+      basePricePaise: 250000,
+      basePrice: 250000,
+      billingInterval: "WEEKLY",
+    },
+  });
+
   // Acme: Monthly plan (₹10,000/mo -> 1,000,000 paise)
   const subAcme = await prisma.subscription.upsert({
     where: { subscriptionNo: "SUB-2026-001" },
@@ -168,11 +216,11 @@ async function main() {
     create: {
       subscriptionNo: "SUB-2026-001",
       customerId: customerAcme.id,
+      planId: planMonthly.id,
+      planPricePaise: 1000000,
       status: SubscriptionStatus.ACTIVE,
-      planSnapshotName: "Enterprise Cloud Suite (Monthly)",
       planNameSnapshot: "Enterprise Cloud Suite (Monthly)",
       billingInterval: BillingInterval.MONTHLY,
-      planSnapshotBillingInterval: BillingInterval.MONTHLY,
       startDate: new Date("2026-01-01"),
       recurringTotalPaise: 1000000, // ₹10,000/mo
       nextBillingAt: new Date("2026-12-01"),
@@ -186,11 +234,11 @@ async function main() {
     create: {
       subscriptionNo: "SUB-2026-002",
       customerId: customerGlobex.id,
+      planId: planAnnual.id,
+      planPricePaise: 12000000,
       status: SubscriptionStatus.ACTIVE,
-      planSnapshotName: "Annual Business Backbone",
       planNameSnapshot: "Annual Business Backbone",
       billingInterval: BillingInterval.YEARLY,
-      planSnapshotBillingInterval: BillingInterval.YEARLY,
       startDate: new Date("2026-06-01"),
       recurringTotalPaise: 12000000, // ₹120,000/yr
       nextBillingAt: new Date("2027-06-01"),
@@ -204,11 +252,11 @@ async function main() {
     create: {
       subscriptionNo: "SUB-2026-003",
       customerId: customerStark.id,
+      planId: planWeekly.id,
+      planPricePaise: 250000,
       status: SubscriptionStatus.ACTIVE,
-      planSnapshotName: "Weekly High-Volume Sync",
       planNameSnapshot: "Weekly High-Volume Sync",
       billingInterval: BillingInterval.WEEKLY,
-      planSnapshotBillingInterval: BillingInterval.WEEKLY,
       startDate: new Date("2026-09-01"),
       recurringTotalPaise: 250000, // ₹2,500/week
       nextBillingAt: new Date("2026-11-07"),
@@ -227,15 +275,10 @@ async function main() {
       periodStart: new Date("2026-10-01"),
       periodEnd: new Date("2026-10-31"),
       issuedAt: new Date("2026-10-01"),
-      issueDate: new Date("2026-10-01"),
       dueAt: new Date("2026-11-15"),
-      dueDate: new Date("2026-11-15"),
       status: InvoiceStatus.CONFIRMED,
-      subtotal: 900000,
       subtotalPaise: 900000,
-      taxTotal: 100000,
       taxPaise: 100000,
-      total: 1000000,
       totalPaise: 1000000, // ₹10,000
     },
   });
@@ -251,15 +294,10 @@ async function main() {
       periodStart: new Date("2026-09-01"),
       periodEnd: new Date("2026-09-30"),
       issuedAt: new Date("2026-09-01"),
-      issueDate: new Date("2026-09-01"),
       dueAt: new Date("2026-09-25"), // Past due date -> Overdue!
-      dueDate: new Date("2026-09-25"),
       status: InvoiceStatus.CONFIRMED,
-      subtotal: 2500000,
       subtotalPaise: 2500000,
-      taxTotal: 250000,
       taxPaise: 250000,
-      total: 2750000,
       totalPaise: 2750000, // ₹27,500
     },
   });
@@ -275,15 +313,10 @@ async function main() {
       periodStart: new Date("2026-10-01"),
       periodEnd: new Date("2026-10-07"),
       issuedAt: new Date("2026-10-01"),
-      issueDate: new Date("2026-10-01"),
       dueAt: new Date("2026-10-10"),
-      dueDate: new Date("2026-10-10"),
       status: InvoiceStatus.PAID,
-      subtotal: 250000,
       subtotalPaise: 250000,
-      taxTotal: 0,
       taxPaise: 0,
-      total: 250000,
       totalPaise: 250000, // ₹2,500
       paidAt: new Date("2026-10-05"),
     },
@@ -300,15 +333,10 @@ async function main() {
       periodStart: new Date("2026-11-01"),
       periodEnd: new Date("2026-11-30"),
       issuedAt: new Date("2026-11-01"),
-      issueDate: new Date("2026-11-01"),
       dueAt: new Date("2026-11-20"),
-      dueDate: new Date("2026-11-20"),
       status: InvoiceStatus.DRAFT,
-      subtotal: 1000000,
       subtotalPaise: 1000000,
-      taxTotal: 100000,
       taxPaise: 100000,
-      total: 1100000,
       totalPaise: 1100000,
     },
   });
@@ -323,26 +351,24 @@ async function main() {
       data: [
         {
           invoiceId: inv1.id,
-          description: "Enterprise Cloud Core - 10 Seats",
+          descriptionSnapshot: "Enterprise Cloud Core - 10 Seats",
           quantity: 10,
-          unitPrice: 80000,
           unitPricePaise: 80000,
-          taxRate: 1000,
-          taxAmount: 80000,
+          subtotalPaise: 800000,
+          taxablePaise: 800000,
+          taxRateBps: 1000,
           taxPaise: 80000,
-          total: 880000,
           totalPaise: 880000,
         },
         {
           invoiceId: inv1.id,
-          description: "Premium SLA Add-on",
+          descriptionSnapshot: "Premium SLA Add-on",
           quantity: 1,
-          unitPrice: 100000,
           unitPricePaise: 100000,
-          taxRate: 2000,
-          taxAmount: 20000,
+          subtotalPaise: 100000,
+          taxablePaise: 100000,
+          taxRateBps: 2000,
           taxPaise: 20000,
-          total: 120000,
           totalPaise: 120000,
         },
       ],

@@ -16,7 +16,7 @@ export function getAuthUser(request: Request): AuthUser {
   const roleHeader = request.headers.get('x-user-role')?.toUpperCase() as UserRole | undefined;
   const userId = request.headers.get('x-user-id') || 'usr_admin_default';
   const customerId = request.headers.get('x-customer-id') || null;
-  const email = request.headers.get('x-user-email') || 'admin@brightloop.io';
+  const email = request.headers.get('x-user-email') || 'admin@planzo.io';
 
   const role: UserRole =
     roleHeader === 'ADMIN' || roleHeader === 'STAFF' || roleHeader === 'CUSTOMER'

@@ -5,7 +5,7 @@ import type { User, Customer } from "@prisma/client";
 export const UserRole = { ADMIN: "ADMIN", STAFF: "STAFF", CUSTOMER: "CUSTOMER" } as const;
 export type UserRole = "ADMIN" | "STAFF" | "CUSTOMER";
 
-export const SESSION_COOKIE_NAME = "brightloop_session";
+export const SESSION_COOKIE_NAME = "planzo_session";
 export const SESSION_EXPIRATION_DAYS = 7;
 export const SESSION_MAX_AGE = SESSION_EXPIRATION_DAYS * 24 * 60 * 60; // in seconds
 
@@ -25,7 +25,7 @@ export interface AuthUser {
 export const DEFAULT_STAFF_USER: AuthUser = {
   id: "usr_staff_01",
   name: "Joe Finance Lead",
-  email: "joe.finance@brightloop.com",
+  email: "joe.finance@planzo.com",
   role: UserRole.STAFF,
 };
 
@@ -189,7 +189,7 @@ export async function getSessionUser(req?: Request): Promise<AuthUser | null> {
       return {
         id: userId,
         name: userEmail ? userEmail.split("@")[0] : "Authenticated User",
-        email: userEmail || "user@brightloop.com",
+        email: userEmail || "user@planzo.com",
         role: userRole,
         customerId: customerId || null,
       };

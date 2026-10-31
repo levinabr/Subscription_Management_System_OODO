@@ -205,7 +205,7 @@ export class InvoiceService {
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
-    const smtpFrom = process.env.SMTP_FROM || 'billing@brightloop.io';
+    const smtpFrom = process.env.SMTP_FROM || 'billing@planzo.io';
 
     if (!smtpHost || !smtpUser) {
       throw new Error(
@@ -224,7 +224,7 @@ export class InvoiceService {
     });
 
     const formattedTotal = (invoice.totalPaise / 100).toFixed(2);
-    const subject = `Invoice ${invoice.invoiceNo} from Brightloop - ₹${formattedTotal}`;
+    const subject = `Invoice ${invoice.invoiceNo} from PLANZO - ₹${formattedTotal}`;
 
     const textContent = `
 Dear ${invoice.customer.name},
@@ -243,7 +243,7 @@ Discount: -₹${(invoice.discountPaise / 100).toFixed(2)}
 Tax: ₹${(invoice.taxPaise / 100).toFixed(2)}
 Total Due: ₹${formattedTotal}
 
-Thank you for choosing Brightloop!
+Thank you for choosing PLANZO!
 `;
 
     await transporter.sendMail({

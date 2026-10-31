@@ -24,7 +24,7 @@ export async function GET(
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Invoice #${invoice.invoiceNo} - Brightloop</title>
+  <title>Invoice #${invoice.invoiceNo} - PLANZO</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1f2937; margin: 0; padding: 40px; background: #fff; }
     .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e5e7eb; padding-bottom: 24px; margin-bottom: 30px; }
@@ -57,7 +57,7 @@ export async function GET(
   </div>
   <div class="header">
     <div>
-      <div class="logo">Brightloop Software</div>
+      <div class="logo">PLANZO Software</div>
       <div style="color: #6b7280; font-size: 13px; margin-top: 4px;">Subscription Control Center</div>
     </div>
     <div style="text-align: right;">
