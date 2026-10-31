@@ -48,8 +48,8 @@ export default function StaffPage() {
       setStaffList([
         {
           id: "seed-admin",
-          name: "Brightloop Administrator",
-          email: "admin@brightloop.io",
+          name: "PLANZO Administrator",
+          email: "admin@planzo.io",
           role: "ADMIN",
           createdAt: new Date().toISOString(),
         },
@@ -188,7 +188,7 @@ export default function StaffPage() {
           <Input
             label="Corporate Email Address"
             type="email"
-            placeholder="arun@brightloop.io"
+            placeholder="arun@planzo.io"
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}

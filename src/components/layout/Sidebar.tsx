@@ -116,7 +116,7 @@ export function Sidebar({ role, userEmail }: SidebarProps) {
         </div>
         <div>
           <span className="font-bold text-white tracking-tight text-base">
-            Brightloop
+            PLANZO
           </span>
           <span className="block text-[10px] text-indigo-400 font-medium uppercase tracking-wider">
             Control Center

@@ -10,14 +10,14 @@ describe('Authentication & Authorization Access Controls', () => {
   const adminUser: AuthUser = {
     id: 'usr_admin',
     name: 'Admin Levin',
-    email: 'admin@brightloop.com',
+    email: 'admin@planzo.com',
     role: 'ADMIN',
   };
 
   const staffUser: AuthUser = {
     id: 'usr_staff',
     name: 'Staff Joe',
-    email: 'joe@brightloop.com',
+    email: 'joe@planzo.com',
     role: 'STAFF',
   };
 

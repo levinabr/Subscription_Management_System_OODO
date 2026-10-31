@@ -11,7 +11,7 @@ import { UserRole, ProductType, BillingInterval } from "@prisma/client";
 
 async function runTests() {
   console.log("=================================================");
-  console.log("BRIGHTLOOP FOUNDATION INTEGRATION & RBAC TEST SUITE");
+  console.log("PLANZO FOUNDATION INTEGRATION & RBAC TEST SUITE");
   console.log("=================================================\n");
 
   let passed = 0;
@@ -29,13 +29,13 @@ async function runTests() {
 
   // 1. Admin Seed Repeatability
   console.log("1. Testing Admin Seed & Idempotency");
-  const adminEmail = (process.env.ADMIN_EMAIL || "admin@brightloop.io").toLowerCase().trim();
+  const adminEmail = (process.env.ADMIN_EMAIL || "admin@PLANZO.io").toLowerCase().trim();
   const adminUser = await prisma.user.findUnique({ where: { email: adminEmail } });
   assert(!!adminUser && adminUser.role === UserRole.ADMIN, "Bootstrap Admin exists with ADMIN role");
 
   // 2. Customer Registration
   console.log("\n2. Testing Customer Registration & Transactional Creation");
-  const testEmail = `test.corp.${Date.now()}@brightloop-test.com`;
+  const testEmail = `test.corp.${Date.now()}@PLANZO-test.com`;
   const regInput = {
     name: "Aparna Sharma",
     companyName: "Aparna Tech Solutions Pvt Ltd",
@@ -110,7 +110,7 @@ async function runTests() {
 
   // 7. Customer Data Isolation
   console.log("\n7. Testing Customer Multi-Tenant Data Isolation");
-  const secondEmail = `other.corp.${Date.now()}@brightloop-test.com`;
+  const secondEmail = `other.corp.${Date.now()}@PLANZO-test.com`;
   const otherUser = await AuthService.register({
     name: "Vikram Sen",
     companyName: "Vikram Enterprises",
@@ -130,7 +130,7 @@ async function runTests() {
   console.log("\n8. Testing RBAC: Staff Creation");
   const staffInput = {
     name: "Rohan Staff",
-    email: `staff.${Date.now()}@brightloop.io`,
+    email: `staff.${Date.now()}@PLANZO.io`,
     password: "StaffPassword123!",
     role: "STAFF" as const,
   };
@@ -142,7 +142,7 @@ async function runTests() {
   console.log("\n9. Testing RBAC: Catalog Mutation Restrictions");
   const productInput = {
     sku: `PROD-TEST-${Date.now()}`,
-    name: "Brightloop Automation Suite",
+    name: "PLANZO Automation Suite",
     productType: ProductType.SOFTWARE,
     salesPrice: 499900, // ₹4,999.00
     costPrice: 150000,  // ₹1,500.00

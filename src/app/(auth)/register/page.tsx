@@ -60,7 +60,7 @@ export default function RegisterPage() {
             <Building2 className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            Brightloop Customer Registration
+            PLANZO Customer Registration
           </h1>
           <p className="text-sm text-slate-400">
             Set up your organization account for automated subscription billing

@@ -2,11 +2,11 @@
 
 A unified platform to manage the full lifecycle of a subscription business: from setting up products and plans, to generating invoices, collecting payments, and reporting recurring revenue.
 
-Built around the needs of **Brightloop Software**, a company that sells software on monthly and yearly subscriptions, with add-ons and product variants.
+Built around the needs of **PLANZO Software**, a company that sells software on monthly and yearly subscriptions, with add-ons and product variants.
 
 ## The Problem
 
-Brightloop currently runs on spreadsheets and manual work. Renewals are missed, invoices are typed by hand, payments are matched against bank statements, and nobody can say how much recurring revenue the company really has. This system replaces all of that with one automated backbone.
+PLANZO currently runs on spreadsheets and manual work. Renewals are missed, invoices are typed by hand, payments are matched against bank statements, and nobody can say how much recurring revenue the company really has. This system replaces all of that with one automated backbone.
 
 ## Features
 

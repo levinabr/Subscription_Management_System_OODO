@@ -194,11 +194,11 @@ export function InvoicePrintView({ invoice, onStatusChange }: InvoicePrintViewPr
         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-slate-200 pb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="bg-indigo-600 text-white rounded-md p-1.5 text-base font-black">BL</span>
-              <span className="text-2xl font-black tracking-tight text-slate-900">Brightloop Software</span>
+              <span className="bg-indigo-600 text-white rounded-md p-1.5 text-base font-black">PZ</span>
+              <span className="text-2xl font-black tracking-tight text-slate-900">PLANZO Software</span>
             </div>
             <p className="text-sm text-slate-500">Subscription Control Center</p>
-            <p className="text-xs text-slate-400 mt-1">billing@brightloop.io | GSTIN: 29ABCDE1234F1Z5</p>
+            <p className="text-xs text-slate-400 mt-1">billing@PLANZO.io | GSTIN: 29ABCDE1234F1Z5</p>
           </div>
 
           <div className="text-right">
@@ -318,7 +318,7 @@ export function InvoicePrintView({ invoice, onStatusChange }: InvoicePrintViewPr
 
         {/* Footer Note */}
         <div className="border-t border-slate-100 pt-6 text-center text-xs text-slate-400">
-          This is a computer-generated tax invoice from Brightloop Subscription Control Center.
+          This is a computer-generated tax invoice from PLANZO Subscription Control Center.
         </div>
       </div>
     </div>

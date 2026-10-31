@@ -13,8 +13,8 @@ export default function InternalLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/billing" className="flex items-center gap-2 font-bold text-xl text-indigo-600">
-              <span className="bg-indigo-600 text-white rounded-md p-1.5 text-sm font-black">BL</span>
-              Brightloop
+              <span className="bg-indigo-600 text-white rounded-md p-1.5 text-sm font-black">PZ</span>
+              PLANZO
             </Link>
             <nav className="hidden md:flex items-center gap-1 text-sm font-medium text-slate-600">
               <Link

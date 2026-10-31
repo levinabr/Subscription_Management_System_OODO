@@ -1,7 +1,7 @@
 /**
  * Billing Date Calculation Engine
  * 
- * Accurately calculates recurring billing dates and periods for Brightloop.
+ * Accurately calculates recurring billing dates and periods for PLANZO.
  * Uses strict UTC date handling to prevent timezone shifts across local environments.
  * Handles month-end anchoring and leap years deterministically.
  */
