@@ -22,9 +22,9 @@ export class PlanService {
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { code: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
+        { name: { contains: search } },
+        { code: { contains: search } },
+        { description: { contains: search } },
       ];
     }
 
@@ -97,7 +97,7 @@ export class PlanService {
     }
 
     return prisma.plan.create({
-      data: input,
+      data: input as any,
       include: {
         taxRule: true,
       },

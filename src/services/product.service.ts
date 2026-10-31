@@ -8,10 +8,12 @@ import {
   UpdateProductVariantInput,
   ProductQueryInput,
 } from "@/validations/product/product.schema";
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma } from '@prisma/client';
+const UserRole = { ADMIN: 'ADMIN', STAFF: 'STAFF', CUSTOMER: 'CUSTOMER' } as const;
+type UserRole = typeof UserRole[keyof typeof UserRole];
 
 export class ProductService {
-  static sanitizeForCustomer<T extends Record<string, unknown>>(product: T, userRole: UserRole): Omit<T, "costPrice"> | T {
+  static sanitizeForCustomer<T extends Record<string, unknown>>(product: T, userRole: string): Omit<T, "costPrice"> | T {
     if (userRole === UserRole.CUSTOMER) {
       const { costPrice: _, ...safe } = product;
       return safe as Omit<T, "costPrice">;
@@ -36,9 +38,9 @@ export class ProductService {
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { sku: { contains: search, mode: "insensitive" } },
-        { notes: { contains: search, mode: "insensitive" } },
+        { name: { contains: search } },
+        { sku: { contains: search } },
+        { notes: { contains: search } },
       ];
     }
 

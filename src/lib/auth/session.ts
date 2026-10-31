@@ -1,7 +1,9 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db/prisma";
-import { User, Customer, UserRole } from "@prisma/client";
+import type { User, Customer } from "@prisma/client";
+export const UserRole = { ADMIN: "ADMIN", STAFF: "STAFF", CUSTOMER: "CUSTOMER" } as const;
+export type UserRole = "ADMIN" | "STAFF" | "CUSTOMER";
 
 export const SESSION_COOKIE_NAME = "brightloop_session";
 export const SESSION_EXPIRATION_DAYS = 7;
