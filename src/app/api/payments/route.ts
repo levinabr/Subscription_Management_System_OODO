@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth/session';
-import { PaymentFilterSchema } from '@/validations/payment/payment.schema';
-import { getPaymentHistory } from '@/services/payment/payment.service';
+import { getSessionUser, isStaffOrAdmin } from '@/lib/auth/session';
+import { PaymentFilterSchema, CreatePaymentSchema } from '@/validations/payment/payment.schema';
+import { getPaymentHistory, recordInvoicePayment } from '@/services/payment/payment.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,6 +35,41 @@ export async function GET(req: NextRequest) {
 
     const data = await getPaymentHistory(parseResult.data, customerScope);
     return NextResponse.json(data);
+  } catch (error: any) {
+    const status = error.statusCode || 500;
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const user = await getSessionUser(req);
+    if (!user || !isStaffOrAdmin(user)) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Staff or Admin role required to record payments.' },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const invoiceId = body.invoiceId;
+    if (!invoiceId) {
+      return NextResponse.json({ error: 'Missing invoiceId' }, { status: 400 });
+    }
+
+    const parseResult = CreatePaymentSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parseResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const result = await recordInvoicePayment(invoiceId, parseResult.data, user.id);
+    return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     const status = error.statusCode || 500;
     return NextResponse.json(

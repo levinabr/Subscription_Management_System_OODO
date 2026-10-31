@@ -14,32 +14,69 @@ export const AddCustomerModal: React.FC = () => {
   const [paymentType, setPaymentType] = useState<'visa' | 'mastercard' | 'amex' | 'ach' | 'bacs' | 'sepa'>('visa');
   const [cardLast4, setCardLast4] = useState('4242');
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (!isAddCustomerModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) return;
+    setErrorMessage(null);
+    setFieldErrors({});
 
-    addCustomer({
-      name,
-      email,
-      company: name,
-      status: 'active',
-      tier,
-      plansCount: 1,
-      primaryPlan: tier === 'Enterprise' || tier === 'Tier 1' ? 'Enterprise Core' : 'Growth Scale',
-      taxId,
-      currency,
-      location,
-      paymentMethod: {
-        type: paymentType as any,
-        last4: cardLast4,
-        expiry: '12/28',
-        verified: true,
-        name: `Corporate ${paymentType.toUpperCase()} Sweep`
+    // Client-side quick check
+    if (!name || name.trim().length < 2) {
+      setFieldErrors(prev => ({ ...prev, companyName: 'Company name must be at least 2 characters' }));
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email.trim())) {
+      setFieldErrors(prev => ({ ...prev, email: 'Please enter a valid email address (e.g. name@domain.com)' }));
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await addCustomer({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        company: name.trim(),
+        status: 'active',
+        tier,
+        plansCount: 1,
+        primaryPlan: tier === 'Enterprise' || tier === 'Tier 1' ? 'Enterprise Core' : 'Growth Scale',
+        taxId: taxId.trim(),
+        currency,
+        location: location.trim(),
+        paymentMethod: {
+          type: paymentType as any,
+          last4: cardLast4,
+          expiry: '12/28',
+          verified: true,
+          name: `Corporate ${paymentType.toUpperCase()} Sweep`
+        }
+      });
+
+      // Reset form state on success
+      setName('');
+      setEmail('');
+      setErrorMessage(null);
+      setFieldErrors({});
+      setIsAddCustomerModalOpen(false);
+    } catch (err: any) {
+      if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+        setFieldErrors(err.fieldErrors);
       }
-    });
+      setErrorMessage(err.message || 'Validation failed. Please verify the input values.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
+  const handleClose = () => {
+    setErrorMessage(null);
+    setFieldErrors({});
     setIsAddCustomerModalOpen(false);
   };
 
@@ -52,40 +89,76 @@ export const AddCustomerModal: React.FC = () => {
             <h3 className="text-base font-semibold text-[#dee2f2]">Add Customer Account</h3>
           </div>
           <button
-            onClick={() => setIsAddCustomerModalOpen(false)}
+            onClick={handleClose}
             className="p-1 rounded text-[#87929a] hover:text-[#dee2f2]"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
 
+        {/* Global Error Banner */}
+        {errorMessage && (
+          <div className="p-3 rounded-lg bg-red-950/60 border border-red-500/40 text-red-300 text-xs flex items-center gap-2.5 animate-in fade-in">
+            <span className="material-symbols-outlined text-[18px] text-red-400 shrink-0">error</span>
+            <span className="leading-snug">{errorMessage}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-xs">
           <div>
             <label className="block text-[#87929a] uppercase font-semibold text-[10px] mb-1">
-              Organization / Company Name
+              Organization / Company Name *
             </label>
             <input
               type="text"
               required
               placeholder="e.g. Acme Corp"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-[#161b27] border border-[#94a3b8]/20 text-[#dee2f2] outline-none"
+              onChange={(e) => {
+                setName(e.target.value);
+                if (fieldErrors.companyName) {
+                  setFieldErrors(prev => {
+                    const next = { ...prev };
+                    delete next.companyName;
+                    return next;
+                  });
+                }
+              }}
+              className={`w-full px-3 py-2 rounded-lg bg-[#161b27] border ${
+                fieldErrors.companyName ? 'border-red-500 text-red-200' : 'border-[#94a3b8]/20 text-[#dee2f2]'
+              } outline-none transition-colors`}
             />
+            {fieldErrors.companyName && (
+              <span className="text-[11px] text-red-400 mt-1 block font-medium">{fieldErrors.companyName}</span>
+            )}
           </div>
 
           <div>
             <label className="block text-[#87929a] uppercase font-semibold text-[10px] mb-1">
-              Billing Email Address
+              Billing Email Address *
             </label>
             <input
               type="email"
               required
               placeholder="billing@acme.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-[#161b27] border border-[#94a3b8]/20 text-[#dee2f2] outline-none"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) {
+                  setFieldErrors(prev => {
+                    const next = { ...prev };
+                    delete next.email;
+                    return next;
+                  });
+                }
+              }}
+              className={`w-full px-3 py-2 rounded-lg bg-[#161b27] border ${
+                fieldErrors.email ? 'border-red-500 text-red-200' : 'border-[#94a3b8]/20 text-[#dee2f2]'
+              } outline-none transition-colors`}
             />
+            {fieldErrors.email && (
+              <span className="text-[11px] text-red-400 mt-1 block font-medium">{fieldErrors.email}</span>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -184,16 +257,28 @@ export const AddCustomerModal: React.FC = () => {
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#94a3b8]/15 mt-2">
             <button
               type="button"
-              onClick={() => setIsAddCustomerModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-[#161b27] text-[#bdc8d1] hover:text-[#dee2f2] text-xs font-medium"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-lg bg-[#161b27] text-[#bdc8d1] hover:text-[#dee2f2] text-xs font-medium transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-[#38bdf8] text-[#00354a] font-semibold text-xs hover:bg-[#8ed5ff]"
+              disabled={isSubmitting}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#38bdf8] text-[#00354a] font-semibold text-xs hover:bg-[#8ed5ff] transition-all disabled:opacity-50"
             >
-              Save Customer
+              {isSubmitting ? (
+                <>
+                  <span className="material-symbols-outlined text-[16px] animate-spin">refresh</span>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-[16px]">check</span>
+                  <span>Save Customer</span>
+                </>
+              )}
             </button>
           </div>
         </form>
