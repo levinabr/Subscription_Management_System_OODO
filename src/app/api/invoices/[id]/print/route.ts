@@ -4,13 +4,14 @@ import { getInvoiceDetails } from '@/services/payment/payment.service';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await getSessionUser(req);
     const customerScope = user?.role === 'CUSTOMER' ? user.customerId || 'non-existent' : undefined;
 
-    const invoice = await getInvoiceDetails(params.id, customerScope);
+    const invoice = await getInvoiceDetails(id, customerScope);
     if (!invoice) {
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }

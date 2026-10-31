@@ -15,6 +15,10 @@ import {
   Filter,
   RefreshCw,
   CreditCard,
+  Package,
+  CalendarCheck,
+  Percent,
+  Building2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -59,10 +63,10 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Finance & Revenue Dashboard
+            Control Center & Revenue Dashboard
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Real-time financial visibility into subscriptions, cash inflows, and invoice balances.
+            Real-time financial visibility into subscriptions, cash inflows, invoice balances, and catalog foundations.
           </p>
         </div>
 
@@ -129,8 +133,8 @@ export default function DashboardPage() {
           subtitle="Unpaid amount on active confirmed invoices"
           icon={<Clock className="w-5 h-5 text-amber-600" />}
           badge={{
-            text: metrics?.outstandingBalancePaise > 0 ? 'Pending' : 'Settled',
-            variant: metrics?.outstandingBalancePaise > 0 ? 'amber' : 'emerald',
+            text: (metrics?.outstandingBalancePaise || 0) > 0 ? 'Pending' : 'Settled',
+            variant: (metrics?.outstandingBalancePaise || 0) > 0 ? 'amber' : 'emerald',
           }}
         />
 
@@ -141,8 +145,8 @@ export default function DashboardPage() {
           subtitle="Confirmed invoices past due with unpaid balance"
           icon={<AlertTriangle className="w-5 h-5 text-rose-600" />}
           badge={{
-            text: metrics?.overdueInvoiceCount > 0 ? 'Action Needed' : 'All Clear',
-            variant: metrics?.overdueInvoiceCount > 0 ? 'rose' : 'emerald',
+            text: (metrics?.overdueInvoiceCount || 0) > 0 ? 'Action Needed' : 'All Clear',
+            variant: (metrics?.overdueInvoiceCount || 0) > 0 ? 'rose' : 'emerald',
           }}
         />
       </div>
@@ -189,6 +193,73 @@ export default function DashboardPage() {
               {metrics?.totalPaidInvoices || 0}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Catalog & Foundation Quick Navigation */}
+      <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+              Catalog & Configuration Modules
+            </h3>
+            <p className="text-xs text-slate-500">
+              Configure products, subscription intervals, basis-point tax rules, and customer accounts
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+          <Link
+            href="/catalog/products"
+            className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition group"
+          >
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
+              <Package className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-900">Products</div>
+              <div className="text-[11px] text-slate-500">Catalog & SKUs</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/catalog/plans"
+            className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition group"
+          >
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition">
+              <CalendarCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-900">Plans</div>
+              <div className="text-[11px] text-slate-500">Cadences & pricing</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/catalog/taxes"
+            className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-amber-300 hover:bg-amber-50/30 transition group"
+          >
+            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg group-hover:bg-amber-600 group-hover:text-white transition">
+              <Percent className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-900">Tax Rules</div>
+              <div className="text-[11px] text-slate-500">Basis-point rates</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/customers"
+            className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-purple-300 hover:bg-purple-50/30 transition group"
+          >
+            <div className="p-2 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
+              <Building2 className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-900">Customers</div>
+              <div className="text-[11px] text-slate-500">Business profiles</div>
+            </div>
+          </Link>
         </div>
       </div>
 

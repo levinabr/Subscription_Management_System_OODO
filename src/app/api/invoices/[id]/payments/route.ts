@@ -5,9 +5,10 @@ import { recordInvoicePayment, getInvoiceDetails } from '@/services/payment/paym
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await getSessionUser(req);
     if (!user || !isStaffOrAdmin(user)) {
       return NextResponse.json(
@@ -29,7 +30,7 @@ export async function POST(
       );
     }
 
-    const result = await recordInvoicePayment(params.id, parseResult.data, user.id);
+    const result = await recordInvoicePayment(id, parseResult.data, user.id);
 
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
@@ -43,13 +44,14 @@ export async function POST(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await getSessionUser(req);
     const customerScope = user?.role === 'CUSTOMER' ? user.customerId || undefined : undefined;
 
-    const invoice = await getInvoiceDetails(params.id, customerScope);
+    const invoice = await getInvoiceDetails(id, customerScope);
     if (!invoice) {
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }

@@ -40,7 +40,7 @@ export interface PaymentResult {
     paidAt: Date;
     reference: string | null;
     note: string | null;
-    recordedByUserId: string;
+    recordedByUserId: string | null;
     recordedByUser?: {
       id: string;
       name: string;

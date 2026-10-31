@@ -11,31 +11,25 @@ export const PaymentMethodEnum = z.enum([
 
 export const CreatePaymentSchema = z.object({
   amountPaise: z
-    .number({
-      required_error: 'Amount is required',
-      invalid_type_error: 'Amount must be an integer in paise',
-    })
+    .number()
     .int('Amount in paise must be an integer')
     .positive('Payment amount must be greater than zero'),
   method: PaymentMethodEnum,
-  paidAt: z.coerce.date({
-    required_error: 'Payment date is required',
-    invalid_type_error: 'Invalid payment date',
-  }),
+  paidAt: z.coerce.date(),
   reference: z
     .string()
     .trim()
     .max(100, 'Reference cannot exceed 100 characters')
     .optional()
-    .nullable()
-    .transform((val) => (val && val.length > 0 ? val : undefined)),
+    .transform((val) => (val && val.length > 0 ? val : undefined))
+    .optional(),
   note: z
     .string()
     .trim()
     .max(500, 'Note cannot exceed 500 characters')
     .optional()
-    .nullable()
-    .transform((val) => (val && val.length > 0 ? val : undefined)),
+    .transform((val) => (val && val.length > 0 ? val : undefined))
+    .optional(),
 });
 
 export type CreatePaymentInput = z.infer<typeof CreatePaymentSchema>;

@@ -32,7 +32,7 @@ describe('API Route Handlers Integration & Access Controls', () => {
         }),
       });
 
-      const res = await createPaymentHandler(req, { params: { id: 'inv_1' } });
+      const res = await createPaymentHandler(req, { params: Promise.resolve({ id: 'inv_1' }) });
       expect(res.status).toBe(403);
       const data = await res.json();
       expect(data.error).toMatch(/Staff or Admin role required/);
@@ -53,7 +53,7 @@ describe('API Route Handlers Integration & Access Controls', () => {
         }),
       });
 
-      const res = await createPaymentHandler(req, { params: { id: 'inv_1' } });
+      const res = await createPaymentHandler(req, { params: Promise.resolve({ id: 'inv_1' }) });
       expect(res.status).toBe(400);
       const data = await res.json();
       expect(data.error).toBe('Validation failed');
@@ -80,7 +80,7 @@ describe('API Route Handlers Integration & Access Controls', () => {
         }),
       });
 
-      const res = await createPaymentHandler(req, { params: { id: 'inv_1' } });
+      const res = await createPaymentHandler(req, { params: Promise.resolve({ id: 'inv_1' }) });
       expect(res.status).toBe(201);
       const data = await res.json();
       expect(data.payment.id).toBe('pay_99');
@@ -130,7 +130,7 @@ describe('API Route Handlers Integration & Access Controls', () => {
         },
       });
 
-      const res = await getInvoiceHandler(req, { params: { id: 'inv_foreign' } });
+      const res = await getInvoiceHandler(req, { params: Promise.resolve({ id: 'inv_foreign' }) });
       expect(res.status).toBe(403);
     });
   });
