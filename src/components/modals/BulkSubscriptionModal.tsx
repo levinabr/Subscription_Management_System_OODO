@@ -51,11 +51,10 @@ export const BulkSubscriptionModal: React.FC = () => {
           </label>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <label
-              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                bulkOp === 'pause'
+              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${bulkOp === 'pause'
                   ? 'bg-[#1b1f2b] border-[#38bdf8] text-[#dee2f2]'
                   : 'bg-[#161b27] border-[#94a3b8]/15 text-[#87929a]'
-              }`}
+                }`}
             >
               <input
                 type="radio"
@@ -68,11 +67,10 @@ export const BulkSubscriptionModal: React.FC = () => {
             </label>
 
             <label
-              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                bulkOp === 'resume'
+              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${bulkOp === 'resume'
                   ? 'bg-[#1b1f2b] border-[#38bdf8] text-[#dee2f2]'
                   : 'bg-[#161b27] border-[#94a3b8]/15 text-[#87929a]'
-              }`}
+                }`}
             >
               <input
                 type="radio"
