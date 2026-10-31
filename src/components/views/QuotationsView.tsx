@@ -183,7 +183,6 @@ export const QuotationsView: React.FC = () => {
                         <button
                           onClick={() => {
                             convertQuotationToSubscription(q.id);
-                            alert(`Quote ${q.quoteNumber} accepted! Converted into live active subscription.`);
                             setCurrentPage('subscriptions');
                           }}
                           className="px-2.5 py-1 rounded bg-[#38bdf8] hover:bg-[#8ed5ff] text-[#00354a] font-semibold text-xs transition-all shadow-sm"

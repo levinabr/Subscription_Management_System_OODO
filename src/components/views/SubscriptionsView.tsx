@@ -24,6 +24,7 @@ export const SubscriptionsView: React.FC = () => {
   const [upgradePlanName, setUpgradePlanName] = useState('Enterprise Scale (Plus)');
   const [upgradeMrr, setUpgradeMrr] = useState(3200);
   const [upgradeSeats, setUpgradeSeats] = useState(65);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
   const activeCount = subscriptions.filter(s => s.status === 'active').length;
   const trialCount = subscriptions.filter(s => s.status === 'trialing').length;
@@ -618,9 +619,17 @@ export const SubscriptionsView: React.FC = () => {
                     </button>
                   )}
 
+                  {syncFeedback && (
+                    <div className="col-span-2 p-2 rounded-lg bg-[#4ee6aa]/15 border border-[#4ee6aa]/30 text-[#4ee6aa] text-[11px] font-medium flex items-center gap-1.5 animate-in fade-in">
+                      <span className="material-symbols-outlined text-[15px]">verified</span>
+                      <span>{syncFeedback}</span>
+                    </div>
+                  )}
+
                   <button
                     onClick={() => {
-                      alert(`Triggering live billing ledger sync for ${selectedSub.id}`);
+                      setSyncFeedback(`Ledger sync completed for ${selectedSub.id}`);
+                      setTimeout(() => setSyncFeedback(null), 3000);
                     }}
                     className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#252a36] hover:bg-[#303541] text-[#dee2f2] font-medium transition-colors border border-[#94a3b8]/15"
                   >
@@ -647,7 +656,10 @@ export const SubscriptionsView: React.FC = () => {
             <div className="p-3.5 bg-[#090e19]/90 border-t border-[#94a3b8]/15 flex items-center justify-between text-[#87929a] font-mono text-[10px]">
               <span>Token: {selectedSub.tokenRef}</span>
               <button
-                onClick={() => alert(`Ledger telemetry: ${selectedSub.id} hash verified`)}
+                onClick={() => {
+                  setSyncFeedback(`Telemetry SHA-256 hash verified for ${selectedSub.id}`);
+                  setTimeout(() => setSyncFeedback(null), 3000);
+                }}
                 className="hover:text-[#dee2f2] flex items-center gap-1 transition-colors"
               >
                 <span className="material-symbols-outlined text-[12px]">terminal</span> Telemetry

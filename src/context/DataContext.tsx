@@ -67,6 +67,8 @@ interface DataContextType {
   resumeSubscription: (id: string) => void;
   cancelSubscription: (id: string) => void;
   upgradeSubscription: (id: string, newPlanName: string, newMrr: number, newSeats: number) => void;
+  bulkUpdateSubscriptions: (operation: 'pause' | 'resume') => void;
+  issueCreditNote: (customerId: string, amount: number) => void;
   selectedSubId: string;
   setSelectedSubId: (id: string) => void;
 
@@ -615,6 +617,56 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuditEvents(prev => [audit, ...prev]);
   };
 
+  const bulkUpdateSubscriptions = (operation: 'pause' | 'resume') => {
+    const targetStatus = operation === 'pause' ? 'paused' : 'active';
+    const sourceStatus = operation === 'pause' ? 'active' : 'paused';
+    let affectedCount = 0;
+    setSubscriptions(prev =>
+      prev.map(sub => {
+        if (sub.status === sourceStatus) {
+          affectedCount++;
+          return { ...sub, status: targetStatus, health: operation === 'pause' ? 'On Hold' : 'Healthy' };
+        }
+        return sub;
+      })
+    );
+    const audit: AuditEvent = {
+      id: 'evt_' + Date.now(),
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+      actor: 'Elena Vance',
+      actorRole: 'VP Financial Ops',
+      action: operation === 'pause' ? 'SUBSCRIPTIONS_BULK_PAUSED' : 'SUBSCRIPTIONS_BULK_RESUMED',
+      target: 'Bulk ' + operation + ' executed on ' + (affectedCount || 'cohort') + ' subscriptions',
+      category: 'SUBSCRIPTION',
+      status: 'SUCCESS'
+    };
+    setAuditEvents(prev => [audit, ...prev]);
+  };
+
+  const issueCreditNote = (customerId: string, amount: number) => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer) return;
+    setCustomers(prev =>
+      prev.map(c => {
+        if (c.id === customerId) {
+          return { ...c, outstandingBalance: Math.max(0, c.outstandingBalance - amount) };
+        }
+        return c;
+      })
+    );
+    const audit: AuditEvent = {
+      id: 'evt_' + Date.now(),
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+      actor: 'Elena Vance',
+      actorRole: 'VP Financial Ops',
+      action: 'CREDIT_NOTE_ISSUED',
+      target: 'Credit Note of ' + String.fromCharCode(36) + amount.toLocaleString() + ' issued to ' + customer.name,
+      category: 'BILLING',
+      status: 'SUCCESS'
+    };
+    setAuditEvents(prev => [audit, ...prev]);
+  };
+
   // Staged billing actions
   const excludeStagedItem = (id: string) => {
     setStagedBilling(prev =>
@@ -934,6 +986,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resumeSubscription,
         cancelSubscription,
         upgradeSubscription,
+        bulkUpdateSubscriptions,
+        issueCreditNote,
         selectedSubId,
         setSelectedSubId,
 

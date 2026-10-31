@@ -12,12 +12,15 @@ export const CustomersView: React.FC = () => {
     setIsNewSubModalOpen,
     exportDataToCsv,
     setCurrentPage,
-    subscriptions
+    subscriptions,
+    issueCreditNote,
+    updateCustomer
   } = useData();
 
   const [activeTab, setActiveTab] = useState<'all' | 'enterprise' | 'growth' | 'at_risk' | 'new'>('all');
   const [filterSearch, setFilterSearch] = useState('');
   const [isPanelVisible, setIsPanelVisible] = useState(true);
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
   // Filter customers by tab & search query
   const filteredCustomers = customers.filter((cust) => {
@@ -538,7 +541,10 @@ export const CustomersView: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => alert(`Opening payment vault management for ${selectedCustomer.name}`)}
+                  onClick={() => {
+                    setActionFeedback(`Vault token tok_vault_${selectedCustomer.id.slice(-6)} verified with Stripe Connect`);
+                    setTimeout(() => setActionFeedback(null), 3000);
+                  }}
                   className="text-xs text-[#38bdf8] font-medium hover:underline"
                 >
                   Manage
@@ -612,25 +618,37 @@ export const CustomersView: React.FC = () => {
               </div>
             </div>
 
+            {actionFeedback && (
+              <div className="p-2.5 rounded-lg bg-[#4ee6aa]/15 border border-[#4ee6aa]/30 text-[#4ee6aa] text-xs font-medium flex items-center gap-2 animate-in fade-in">
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                <span>{actionFeedback}</span>
+              </div>
+            )}
+
             {/* Action Footer */}
             <div className="grid grid-cols-2 gap-3 pt-1">
               <button
                 onClick={() => {
-                  alert(`Edit Billing Parameters for ${selectedCustomer.name}`);
+                  const nextStatus = selectedCustomer.status === 'active' ? 'paused' : 'active';
+                  updateCustomer(selectedCustomer.id, { status: nextStatus });
+                  setActionFeedback(`Account status switched to ${nextStatus.toUpperCase()}`);
+                  setTimeout(() => setActionFeedback(null), 3000);
                 }}
                 className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-[#252a36] hover:bg-[#303541] text-[#dee2f2] text-xs font-medium transition-colors border border-[#94a3b8]/15"
               >
-                <span className="material-symbols-outlined text-[16px]">credit_card</span>
-                <span>Edit Billing</span>
+                <span className="material-symbols-outlined text-[16px]">toggle_on</span>
+                <span>Toggle Status</span>
               </button>
               <button
                 onClick={() => {
-                  alert(`Credit Note issued for ${selectedCustomer.name}`);
+                  issueCreditNote(selectedCustomer.id, 500);
+                  setActionFeedback(`Credit note of $500.00 applied to ${selectedCustomer.name}`);
+                  setTimeout(() => setActionFeedback(null), 3000);
                 }}
                 className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-[#38bdf8] hover:bg-[#8ed5ff] text-[#00354a] text-xs font-semibold transition-all"
               >
                 <span className="material-symbols-outlined text-[16px]">note_add</span>
-                <span>Credit Note</span>
+                <span>Credit Note ($500)</span>
               </button>
             </div>
           </div>

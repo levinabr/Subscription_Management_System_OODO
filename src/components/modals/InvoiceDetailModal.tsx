@@ -37,7 +37,6 @@ export const InvoiceDetailModal: React.FC = () => {
               <button
                 onClick={() => {
                   payInvoice(selectedInvoice.id);
-                  alert(`Invoice ${selectedInvoice.invoiceNumber} marked as settled.`);
                 }}
                 className="px-3 py-1.5 rounded-lg bg-[#4ee6aa] text-[#003825] font-semibold text-xs hover:bg-[#68fcbf] transition-colors"
               >

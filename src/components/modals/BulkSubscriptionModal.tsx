@@ -3,14 +3,19 @@ import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 
 export const BulkSubscriptionModal: React.FC = () => {
-  const { isBulkSubModalOpen, setIsBulkSubModalOpen, subscriptions } = useData();
+  const { isBulkSubModalOpen, setIsBulkSubModalOpen, bulkUpdateSubscriptions, subscriptions } = useData();
   const [bulkOp, setBulkOp] = useState<'pause' | 'resume'>('pause');
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   if (!isBulkSubModalOpen) return null;
 
   const handleExecute = () => {
-    alert(`Bulk ${bulkOp} executed safely across selected cohort. Anchor renewal dates preserved.`);
-    setIsBulkSubModalOpen(false);
+    bulkUpdateSubscriptions(bulkOp);
+    setSuccessMsg(`Bulk ${bulkOp} executed safely across selected cohort. Anchor renewal dates preserved.`);
+    setTimeout(() => {
+      setSuccessMsg(null);
+      setIsBulkSubModalOpen(false);
+    }, 1200);
   };
 
   return (
@@ -32,6 +37,13 @@ export const BulkSubscriptionModal: React.FC = () => {
         <p className="text-xs text-[#bdc8d1]">
           Perform scheduled state updates across filtered cohorts without resetting renewal anchor dates.
         </p>
+
+        {successMsg && (
+          <div className="p-3 rounded-lg bg-[#4ee6aa]/15 border border-[#4ee6aa]/30 text-[#4ee6aa] text-xs font-medium flex items-center gap-2 animate-in fade-in">
+            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>{successMsg}</span>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <label className="text-[10px] font-semibold uppercase tracking-wider text-[#87929a]">
