@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "prisma:generate": "prisma generate && node scripts/patch-prisma-enums.js",
     "prisma:push": "prisma db push",
-    "postinstall": "prisma generate && node scripts/patch-prisma-enums.js"
+    "postinstall": "prisma generate && node scripts/patch-prisma-enums.js",
+    "vercel-build": "prisma generate && node scripts/patch-prisma-enums.js && next build"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",
